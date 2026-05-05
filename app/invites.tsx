@@ -8,13 +8,14 @@ import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
 import { GoldButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
-import { mockInvites } from '@/lib/mockData'
+import { useInvites } from '@/hooks/useInvites'
 import type { Invite } from '@/types'
 
 export default function InvitesScreen() {
   const insets = useSafeAreaInsets()
-  const invites = mockInvites
+  const { data: invites = [], isLoading } = useInvites()
   const unusedInvites = invites.filter(i => !i.used_by)
   const usedInvites = invites.filter(i => !!i.used_by)
 
@@ -43,6 +44,14 @@ export default function InvitesScreen() {
         </Text>
       </View>
 
+      {isLoading ? (
+        <View style={[s.section, { gap: 10 }]}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      ) : (
+      <>
       {/* Unused invites */}
       {unusedInvites.length > 0 && (
         <View style={s.section}>
@@ -80,6 +89,9 @@ export default function InvitesScreen() {
             </View>
           ))}
         </View>
+      )}
+      )}
+      </>
       )}
     </ScrollView>
   )

@@ -5,9 +5,10 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
 import { formatRelativeTime } from '@/lib/utils'
-import { mockNotifications } from '@/lib/mockData'
+import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications'
 import type { Notification } from '@/types'
 
 const ICON_MAP: Record<string, string> = {
@@ -21,7 +22,12 @@ const ICON_MAP: Record<string, string> = {
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
+  const { data: notifications, isLoading } = useNotifications()
+  const markAsRead = useMarkNotificationRead()
 
+  const handlePress = (item: Notification) => {
+    if (!item.is_read) markAsRead(item.id)
+  }
   const renderItem = ({ item }: { item: Notification }) => (
     <Card style={[s.notifCard, !item.is_read && s.unread].filter(Boolean) as any}>
       <View style={s.row}>
@@ -58,10 +64,19 @@ export default function NotificationsScreen() {
         <Text variant="h1" color="primary" style={{ marginTop: 8 }}>Notifications</Text>
       </View>
 
+      {isLoading ? (
+        <View style={s.list}>
+          {[1,2,3,4].map(i => <SkeletonCard key={i} />)}
+        </View>
+      ) : (
       <FlatList
-        data={mockNotifications}
+        data={notifications}
         keyExtractor={item => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <Pressable onPress={() => handlePress(item)}>
+            {renderItem({ item })}
+          </Pressable>
+        )}
         contentContainerStyle={s.list}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListEmptyComponent={
@@ -71,6 +86,7 @@ export default function NotificationsScreen() {
           </View>
         }
       />
+      )}
     </View>
   )
 }

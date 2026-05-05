@@ -27,21 +27,20 @@ export default function ApplicationDetail() {
     setActing(true)
     try {
       if (isSupabaseEnabled) {
-        await supabase.from('applications').update({
-          status,
-          admin_notes: notes || null,
-          reviewed_at: new Date().toISOString(),
-        }).eq('id', id)
-
-        if (status === 'approved') {
-          await supabase.from('profiles').update({ role: 'member' }).eq('id', app?.user_id)
-        }
+        // Use server-side RPC — validates admin role, updates application + profile atomically
+        const { error } = await supabase.rpc('review_application', {
+          app_id: id,
+          new_status: status,
+          notes: notes || null,
+        })
+        if (error) throw error
       }
       queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['members'] })
       Alert.alert('Done', `Application ${status}`)
       router.back()
-    } catch (err) {
-      Alert.alert('Error', 'Something went wrong')
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Something went wrong')
     } finally {
       setActing(false)
     }

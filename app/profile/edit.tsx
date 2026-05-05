@@ -8,28 +8,51 @@ import { Text } from '@/components/ui/Text'
 import { Avatar } from '@/components/ui/Avatar'
 import { TextInputField } from '@/components/ui/TextInputField'
 import { GoldButton, GhostButton } from '@/components/ui/Button'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { BG_BASE } from '@/lib/theme'
-import { mockMembers } from '@/lib/mockData'
-
-const user = mockMembers[0]
+import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets()
-  const [name, setName] = useState(user.display_name ?? '')
-  const [bio, setBio] = useState(user.bio ?? '')
-  const [profession, setProfession] = useState(user.profession ?? '')
-  const [company, setCompany] = useState(user.company ?? '')
-  const [city, setCity] = useState(user.city ?? '')
+  const { profile: user, refreshProfile } = useAuth()
+  const [name, setName] = useState(user?.display_name ?? '')
+  const [bio, setBio] = useState(user?.bio ?? '')
+  const [profession, setProfession] = useState(user?.profession ?? '')
+  const [company, setCompany] = useState(user?.company ?? '')
+  const [city, setCity] = useState(user?.city ?? '')
   const [saving, setSaving] = useState(false)
+
+  if (!user) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top + 12, paddingHorizontal: 24 }]}>
+        <SkeletonCard />
+        <SkeletonCard />
+      </View>
+    )
+  }
 
   const handleSave = async () => {
     setSaving(true)
-    // TODO: Supabase update
-    setTimeout(() => {
-      setSaving(false)
-      Alert.alert('Saved', 'Your profile has been updated')
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: name.trim() || null,
+          bio: bio.trim() || null,
+          profession: profession.trim() || null,
+          company: company.trim() || null,
+          city: city.trim() || null,
+        })
+        .eq('id', user.id)
+      if (error) throw error
+      await refreshProfile()
       router.back()
-    }, 800)
+    } catch (err) {
+      Alert.alert('Error', 'Could not save profile. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -74,3 +97,4 @@ const s = StyleSheet.create({
   changePhoto: { marginTop: 10 },
   footer: { paddingHorizontal: 24, gap: 10 },
 })
+

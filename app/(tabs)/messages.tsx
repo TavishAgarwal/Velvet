@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/Text'
 import { Avatar } from '@/components/ui/Avatar'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useConversations } from '@/hooks/useConversations'
 import { BG_BASE, BORDER_DEFAULT, ACCENT } from '@/lib/theme'
 import { formatRelativeTime, truncate } from '@/lib/utils'
@@ -11,7 +12,7 @@ import type { Conversation } from '@/types'
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets()
-  const { data: conversations } = useConversations()
+  const { data: conversations, isLoading } = useConversations()
 
   const renderConversation = ({ item }: { item: Conversation }) => (
     <Pressable
@@ -57,6 +58,11 @@ export default function MessagesScreen() {
         <Text variant="label" uppercase color="accent">Inbox</Text>
         <Text variant="h1" color="primary">Messages</Text>
       </View>
+      {isLoading ? (
+        <View style={{ paddingHorizontal: 16, gap: 10, paddingTop: 8 }}>
+          {[1,2,3,4].map(i => <SkeletonCard key={i} />)}
+        </View>
+      ) : (
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
@@ -71,6 +77,7 @@ export default function MessagesScreen() {
           </View>
         }
       />
+      )}
     </View>
   )
 }

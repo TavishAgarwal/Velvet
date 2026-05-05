@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -8,14 +8,23 @@ import { StatCard } from '@/components/admin/StatCard'
 import { Card } from '@/components/ui/Card'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { ACCENT, BG_BASE, ACCENT_DIM } from '@/lib/theme'
-import { mockAdminStats } from '@/lib/mockData'
+import { useAdminStats } from '@/hooks/useAdminStats'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AdminDashboard() {
   const insets = useSafeAreaInsets()
-  const stats = mockAdminStats
+  const { profile } = useAuth()
+  const { data: stats } = useAdminStats()
+
+  // Guard: redirect non-admins away
+  useEffect(() => {
+    if (profile && profile.role !== 'admin') {
+      router.replace('/(tabs)')
+    }
+  }, [profile])
 
   const menuItems = [
-    { label: 'Application Queue', icon: 'documents-outline' as const, route: '/admin/applications' as const, count: stats.pendingApplications },
+    { label: 'Application Queue', icon: 'documents-outline' as const, route: '/admin/applications' as const, count: stats?.pendingApplications },
     { label: 'Member Directory', icon: 'people-outline' as const, route: '/admin/members' as const },
     { label: 'Create Event', icon: 'calendar-outline' as const, route: '/admin/events/create' as const },
   ]
@@ -29,12 +38,12 @@ export default function AdminDashboard() {
 
       <View style={s.statsGrid}>
         <View style={s.statsRow}>
-          <StatCard label="Pending" value={stats.pendingApplications} highlight />
-          <StatCard label="Members" value={stats.totalMembers} />
+          <StatCard label="Pending" value={stats?.pendingApplications ?? 0} highlight />
+          <StatCard label="Members" value={stats?.totalMembers ?? 0} />
         </View>
         <View style={s.statsRow}>
-          <StatCard label="Events" value={stats.eventsThisMonth} />
-          <StatCard label="Messages" value={stats.messagesToday} />
+          <StatCard label="Events" value={stats?.eventsThisMonth ?? 0} />
+          <StatCard label="Messages" value={stats?.messagesToday ?? 0} />
         </View>
       </View>
 

@@ -14,13 +14,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourcompany.velvet",
-      "associatedDomains": [
-        "applinks:REPLACE_WITH_YOUR_DOMAIN"
-      ]
+      "bundleIdentifier": "com.velvetapp.velvet"
     },
     "android": {
-      "package": "com.yourcompany.velvet",
+      "package": "com.velvetapp.velvet",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0A0A0A"
@@ -58,20 +55,10 @@
       "expo-secure-store",
       "expo-localization",
       "expo-font",
-      ["@sentry/react-native/expo", {
-        "url": "https://sentry.io/",
-        "project": "velvet",
-        "organization": "REPLACE_WITH_YOUR_SENTRY_ORG"
-      }],
-      "@sentry/react-native",
       "expo-sharing"
     ],
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
-      }
-    },
-    "owner": "REPLACE_WITH_YOUR_EXPO_OWNER"
+      "router": {}
+    }
   }
 }

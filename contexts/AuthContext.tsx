@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
+import { queryClient } from '@/lib/queryClient'
 import type { Profile } from '@/types'
 import type { Session } from '@supabase/supabase-js'
 
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     if (!isSupabaseEnabled) return
     await supabase.auth.signOut()
+    queryClient.clear() // Prevent stale data leakage between user sessions
     setSession(null)
     setProfile(null)
   }, [])

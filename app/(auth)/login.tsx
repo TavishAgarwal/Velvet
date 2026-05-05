@@ -15,7 +15,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   View, Pressable, StyleSheet, Dimensions,
   KeyboardAvoidingView, Platform, ActivityIndicator,
-  TextInput as RNTextInput, ScrollView, DeviceEventEmitter,
+  TextInput as RNTextInput, ScrollView,
 } from 'react-native'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import { router } from 'expo-router'
@@ -36,9 +36,7 @@ const APP_SCHEME = 'velvet'
 // Required for OAuth session handling on Android
 WebBrowser.maybeCompleteAuthSession()
 
-// ─── Set to true during development to show a "Skip to Home" button ───────────
-// Set to false before shipping to production.
-const DEV_ALLOW_SKIP = __DEV__
+
 
 // ─── Disposable email blocklist ───────────────────────────────────────────────
 // Prevents throwaway emails from creating accounts.
@@ -187,10 +185,7 @@ export default function LoginScreen() {
     setTimeout(() => emailRef.current?.focus(), 150)
   }
 
-  // ─── Dev skip — bypasses auth for testing UI flow ─────────────────────────────
-  const handleDevSkip = () => {
-    DeviceEventEmitter.emit('__dev_skip_auth__')
-  }
+
 
   // ─── Social login handlers ───────────────────────────────────────────────────
   // Requires: Supabase → Auth → Providers → Google/Apple enabled
@@ -404,16 +399,7 @@ export default function LoginScreen() {
               </View>
             )}
 
-            {/* ─── Dev skip button (only visible in __DEV__) ─────────────────── */}
-            {DEV_ALLOW_SKIP && (
-              <Pressable
-                onPress={handleDevSkip}
-                style={({ pressed }) => [s.devSkipBtn, pressed && { opacity: 0.6 }]}
-              >
-                <Ionicons name="play-skip-forward-outline" size={14} color={TEXT_SECONDARY} />
-                <Text style={s.devSkipText}>Skip to Home (dev only)</Text>
-              </Pressable>
-            )}
+
 
             {/* Legal */}
             <View style={s.legalRow}>
@@ -542,16 +528,7 @@ const s = StyleSheet.create({
   otpMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   resendText: { color: ACCENT, fontSize: 13, fontWeight: '500' },
 
-  // Dev skip
-  devSkipBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    alignSelf: 'center',
-    marginTop: 20,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderStyle: 'dashed',
-    borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  devSkipText: { fontSize: 12, color: TEXT_SECONDARY, fontWeight: '500' },
+
 
   // Legal
   legalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 'auto', paddingTop: 24 },

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useEvents } from '@/hooks/useEvents'
 import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
 import { formatEventDate, formatDateBadge } from '@/lib/utils'
@@ -13,7 +14,7 @@ import type { Event } from '@/types'
 
 export default function EventsScreen() {
   const insets = useSafeAreaInsets()
-  const { data: events } = useEvents()
+  const { data: events, isLoading } = useEvents()
 
   const renderEvent = ({ item }: { item: Event }) => {
     const badge = formatDateBadge(item.starts_at)
@@ -48,6 +49,11 @@ export default function EventsScreen() {
         <Text variant="label" uppercase color="accent">Calendar</Text>
         <Text variant="h1" color="primary">Events</Text>
       </View>
+      {isLoading ? (
+        <View style={{ paddingHorizontal: 16, gap: 10 }}>
+          {[1,2,3].map(i => <SkeletonCard key={i} />)}
+        </View>
+      ) : (
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}
@@ -59,6 +65,7 @@ export default function EventsScreen() {
           </View>
         }
       />
+      )}
     </View>
   )
 }

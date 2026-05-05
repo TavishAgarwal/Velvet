@@ -29,13 +29,14 @@ const INACTIVE_EVENTS = new Set([
 ])
 
 Deno.serve(async (req: Request) => {
-    // Validate Authorization header
+    // Validate Authorization header — secret is MANDATORY
     const secret = Deno.env.get('REVENUECAT_WEBHOOK_SECRET')
-    if (secret) {
-        const auth = req.headers.get('Authorization') ?? ''
-        if (auth !== `Bearer ${secret}`) {
-            return new Response('Unauthorized', { status: 401 })
-        }
+    if (!secret) {
+        return new Response('Webhook secret not configured', { status: 500 })
+    }
+    const auth = req.headers.get('Authorization') ?? ''
+    if (auth !== `Bearer ${secret}`) {
+        return new Response('Unauthorized', { status: 401 })
     }
 
     let body: Record<string, any>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { View, ScrollView, StyleSheet, Pressable, Alert } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { GoldButton, GhostButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { useEvent } from '@/hooks/useEvents'
+import { useEventRsvp, useRsvpActions } from '@/hooks/useEventRsvp'
 import { ACCENT, ACCENT_DIM, BG_BASE, TEXT_TERTIARY, ERROR } from '@/lib/theme'
 import { formatEventDate } from '@/lib/utils'
 
@@ -16,15 +17,21 @@ export default function EventDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
   const { data: event } = useEvent(id)
-  const [rsvpd, setRsvpd] = useState(false)
+  const { data: rsvpData } = useEventRsvp(id)
+  const { rsvp, cancelRsvp } = useRsvpActions(id)
+  const rsvpd = rsvpData?.status === 'going'
 
   if (!event) return <View style={[s.root, { paddingTop: insets.top }]} />
 
   const spotsLeft = event.capacity ? event.capacity - event.rsvp_count : null
 
-  const handleRsvp = () => {
-    setRsvpd(true)
-    Alert.alert('RSVP Confirmed', `You're going to ${event.title}!`)
+  const handleRsvp = async () => {
+    try {
+      await rsvp('going')
+      Alert.alert('RSVP Confirmed', `You're going to ${event.title}!`)
+    } catch (err) {
+      Alert.alert('Error', 'Could not RSVP. Please try again.')
+    }
   }
 
   return (

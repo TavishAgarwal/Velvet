@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
-import { mockApplications } from '@/lib/mockData'
 import type { Application } from '@/types'
 
 export function useApplications(status?: Application['status']) {
@@ -14,9 +13,6 @@ export function useApplications(status?: Application['status']) {
       return data as Application[]
     },
     enabled: isSupabaseEnabled,
-    placeholderData: status
-      ? mockApplications.filter(a => a.status === status)
-      : mockApplications,
   })
 }
 
@@ -33,6 +29,5 @@ export function useApplication(id: string) {
       return data as Application
     },
     enabled: isSupabaseEnabled && !!id,
-    placeholderData: mockApplications.find(a => a.id === id),
   })
 }

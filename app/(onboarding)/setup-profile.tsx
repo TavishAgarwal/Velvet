@@ -9,6 +9,7 @@ import { TextInputField } from '@/components/ui/TextInputField'
 import { GoldButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { ACCENT, BG_BASE, ACCENT_DIM, BORDER_DEFAULT } from '@/lib/theme'
+import { supabase } from '@/lib/supabase'
 
 const INTEREST_OPTIONS = [
   'Art & Design', 'Technology', 'Finance', 'Food & Wine',
@@ -39,11 +40,34 @@ export default function SetupProfileScreen() {
       return
     }
     setSaving(true)
-    // TODO: Supabase profile update + set onboarding_completed = true
-    setTimeout(() => {
-      setSaving(false)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          bio: bio.trim(),
+          city: city.trim(),
+          profession: profession.trim(),
+          company: company.trim() || null,
+          interests: selectedInterests,
+          onboarding_completed: true,
+        })
+        .eq('id', user.id)
+      if (error) throw error
+
+      // Also update auth metadata so _layout.tsx sees onboarding_completed
+      await supabase.auth.updateUser({
+        data: { onboarding_completed: true },
+      })
+
       router.replace('/(tabs)')
-    }, 1000)
+    } catch (err) {
+      Alert.alert('Error', 'Could not save your profile. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

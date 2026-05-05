@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
+import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -8,14 +8,23 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Card } from '@/components/ui/Card'
 import { GoldButton, GhostButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
-import { mockMembers } from '@/lib/mockData'
-
-// Use first mock member as current user placeholder
-const currentUser = mockMembers[0]
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets()
+  const { profile: currentUser, signOut } = useAuth()
+
+  if (!currentUser) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top + 16, paddingHorizontal: 16 }]}>
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </View>
+    )
+  }
 
   return (
     <ScrollView style={s.root} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }}>
@@ -48,7 +57,7 @@ export default function ProfileScreen() {
           <Text variant="caption" color="secondary">Invites Used</Text>
         </View>
         <View style={s.statItem}>
-          <Text variant="h2" color="accent">2</Text>
+          <Text variant="h2" color="accent">—</Text>
           <Text variant="caption" color="secondary">Events Attended</Text>
         </View>
       </View>
@@ -75,6 +84,15 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
           </Pressable>
         ))}
+
+        {/* Sign Out */}
+        <Pressable
+          onPress={signOut}
+          style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }]}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Text variant="body" style={{ flex: 1, color: '#EF4444' }}>Sign Out</Text>
+        </Pressable>
       </View>
     </ScrollView>
   )
@@ -95,3 +113,4 @@ const s = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: BORDER_DEFAULT,
   },
 })
+

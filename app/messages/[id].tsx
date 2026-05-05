@@ -9,32 +9,31 @@ import { TextInputField } from '@/components/ui/TextInputField'
 import { ACCENT, ACCENT_DIM, BG_BASE, BG_SURFACE, BORDER_DEFAULT, TEXT_PRIMARY } from '@/lib/theme'
 import { formatRelativeTime } from '@/lib/utils'
 import { Fonts } from '@/lib/typography'
-import { mockMessages, mockMembers } from '@/lib/mockData'
+import { useMessages, sendMessage } from '@/hooks/useMessages'
+import { useMember } from '@/hooks/useMembers'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Message } from '@/types'
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
   const [text, setText] = useState('')
-  const [messages, setMessages] = useState<Message[]>(mockMessages)
   const flatListRef = useRef<FlatList>(null)
 
-  const otherMember = mockMembers.find(m => m.id === id) ?? mockMembers[1]
-  const currentUserId = mockMembers[0].id
+  const { profile } = useAuth()
+  const currentUserId = profile?.id ?? ''
+  const { data: messages = [] } = useMessages(id)
+  const { data: otherMember } = useMember(id)
 
-  const handleSend = () => {
-    if (!text.trim()) return
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      conversation_id: id,
-      sender_id: currentUserId,
-      content: text.trim(),
-      created_at: new Date().toISOString(),
-      is_read: false,
+  const handleSend = async () => {
+    if (!text.trim() || !profile) return
+    try {
+      await sendMessage(id, profile.id, text.trim())
+      setText('')
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
+    } catch (err) {
+      console.warn('Failed to send message:', err)
     }
-    setMessages(prev => [...prev, newMsg])
-    setText('')
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
   }
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -58,11 +57,11 @@ export default function ChatScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
-        <Pressable onPress={() => router.push(`/member/${otherMember.id}`)} style={s.headerProfile}>
-          <Avatar url={otherMember.avatar_url} name={otherMember.display_name} size="sm" showOnline isOnline={otherMember.is_online} />
+        <Pressable onPress={() => otherMember && router.push(`/member/${otherMember.id}`)} style={s.headerProfile}>
+          <Avatar url={otherMember?.avatar_url} name={otherMember?.display_name} size="sm" showOnline isOnline={otherMember?.is_online} />
           <View>
-            <Text variant="body" color="primary" style={{ fontWeight: '600' }}>{otherMember.display_name}</Text>
-            <Text variant="caption" color="tertiary">{otherMember.is_online ? 'Online' : 'Offline'}</Text>
+            <Text variant="body" color="primary" style={{ fontWeight: '600' }}>{otherMember?.display_name ?? 'Loading…'}</Text>
+            <Text variant="caption" color="tertiary">{otherMember?.is_online ? 'Online' : 'Offline'}</Text>
           </View>
         </Pressable>
       </View>
