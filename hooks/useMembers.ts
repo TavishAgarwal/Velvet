@@ -1,13 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { MOCK_PROFILES } from '@/lib/mockData'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Profile } from '@/types'
 
 export function useMembers(search?: string) {
+  const { profile } = useAuth()
+  
   return useQuery({
-    queryKey: ['members', search],
+    queryKey: ['members', search, profile?.id],
     queryFn: async (): Promise<Profile[]> => {
-      if (!isSupabaseEnabled) return filterBySearch(MOCK_PROFILES, search)
+      if (!isSupabaseEnabled) {
+        return filterBySearch(MOCK_PROFILES, search).filter(p => p.id !== profile?.id)
+      }
 
       try {
         let query = supabase
@@ -23,11 +28,15 @@ export function useMembers(search?: string) {
           query = query.or(`display_name.ilike.%${sanitized}%,profession.ilike.%${sanitized}%,city.ilike.%${sanitized}%`)
         }
 
+        if (profile?.id) {
+          query = query.neq('id', profile.id)
+        }
+
         const { data, error } = await query
         if (error) throw error
         return (data || []) as Profile[]
       } catch {
-        return filterBySearch(MOCK_PROFILES, search)
+        return filterBySearch(MOCK_PROFILES, search).filter(p => p.id !== profile?.id)
       }
     },
   })

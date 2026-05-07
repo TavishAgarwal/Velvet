@@ -9,7 +9,7 @@
  *   2. Update this file to navigate to the next step instead of completing onboarding.
  *   3. Complete onboarding only in the last step.
  */
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   View, Pressable, TextInput, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -33,6 +33,41 @@ export default function OnboardingScreen() {
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    async function fetchDefaultName() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) return
+
+        // Check if profile already has a name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', session.user.id)
+          .single()
+
+        if (profile?.display_name) {
+          setDisplayName(profile.display_name)
+          return
+        }
+
+        // Otherwise, fetch from application
+        const { data: app } = await supabase
+          .from('applications')
+          .select('full_name')
+          .eq('user_id', session.user.id)
+          .single()
+
+        if (app?.full_name) {
+          setDisplayName(app.full_name)
+        }
+      } catch (err) {
+        console.error('Failed to fetch default name:', err)
+      }
+    }
+    fetchDefaultName()
+  }, [])
 
   track('onboarding_started')
 

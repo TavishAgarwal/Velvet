@@ -46,7 +46,7 @@ export default function MemberDetail() {
 
       {/* Profile header */}
       <View style={s.profileSection}>
-        <Avatar url={member.avatar_url} name={member.display_name} size="xl" showOnline isOnline={member.is_online} />
+        <Avatar url={member.avatar_url} name={member.display_name} size="xl" />
         <Text variant="h1" color="primary" style={{ marginTop: 14 }}>{member.display_name}</Text>
         <Text variant="body" color="secondary">
           {member.profession}{member.company ? ` at ${member.company}` : ''}

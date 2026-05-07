@@ -7,11 +7,11 @@ export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async (): Promise<Notification[]> => {
-      if (!isSupabaseEnabled) return MOCK_NOTIFICATIONS
+      if (!isSupabaseEnabled) return []
 
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return MOCK_NOTIFICATIONS
+        if (!user) return []
 
         const { data, error } = await supabase
           .from('notifications')
@@ -20,10 +20,10 @@ export function useNotifications() {
           .order('created_at', { ascending: false })
           .limit(50)
         if (error) throw error
-        if (!data || data.length === 0) return MOCK_NOTIFICATIONS
+        if (!data || data.length === 0) return []
         return data as Notification[]
       } catch {
-        return MOCK_NOTIFICATIONS
+        return []
       }
     },
   })

@@ -11,6 +11,7 @@ import { SkeletonLoader, SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
 import { APP_NAME } from '@/lib/constants'
 import { getGreeting, formatEventDate } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import { useMembers } from '@/hooks/useMembers'
 import { useEvents } from '@/hooks/useEvents'
 import { useNotifications } from '@/hooks/useNotifications'
@@ -18,7 +19,12 @@ import { ErrorState } from '@/components/ui/ErrorState'
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
-  const greeting = getGreeting()
+  const { profile } = useAuth()
+  
+  const greeting = profile?.display_name 
+    ? `${getGreeting()}, ${profile.display_name.split(' ')[0]}`
+    : getGreeting()
+
   const { data: members, isLoading: membersLoading, isError: membersError, refetch: refetchMembers } = useMembers()
   const { data: events, isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents } = useEvents()
   const { data: notifications } = useNotifications()
@@ -85,7 +91,7 @@ export default function HomeScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.memberRow}>
             {newMembers.map(m => (
               <Pressable key={m.id} onPress={() => router.push(`/member/${m.id}`)} style={s.memberChip}>
-                <Avatar url={m.avatar_url} name={m.display_name} size="md" showOnline isOnline={m.is_online} />
+                <Avatar url={m.avatar_url} name={m.display_name} size="md" />
                 <Text variant="caption" color="primary" style={{ marginTop: 4, fontWeight: '500' }} numberOfLines={1}>
                   {m.display_name?.split(' ')[0]}
                 </Text>

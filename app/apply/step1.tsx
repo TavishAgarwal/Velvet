@@ -7,6 +7,7 @@ import { GoldButton, GhostButton } from '@/components/ui/Button'
 import { TextInputField } from '@/components/ui/TextInputField'
 import { StepProgress } from '@/components/application/StepProgress'
 import { useApplication } from '@/contexts/ApplicationContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { BG_BASE } from '@/lib/theme'
 import { isValidEmail } from '@/lib/utils'
@@ -14,19 +15,12 @@ import { isValidEmail } from '@/lib/utils'
 export default function ApplyStep1() {
   const insets = useSafeAreaInsets()
   const { data, dispatch } = useApplication()
+  const { signOut } = useAuth()
   const [name, setName] = useState(data.full_name)
   const [email, setEmail] = useState(data.email)
   const [city, setCity] = useState(data.city)
   const [country, setCountry] = useState(data.country)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [signingOut, setSigningOut] = useState(false)
-
-  const handleSignOut = async () => {
-    setSigningOut(true)
-    await supabase.auth.signOut()
-    setSigningOut(false)
-    router.replace('/')
-  }
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -97,7 +91,7 @@ export default function ApplyStep1() {
 
       <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
         <GoldButton title="Continue" onPress={handleNext} fullWidth />
-        <GhostButton title="Sign Out" onPress={handleSignOut} loading={signingOut} fullWidth />
+        <GhostButton title="Sign Out" onPress={signOut} fullWidth />
       </View>
     </View>
   )

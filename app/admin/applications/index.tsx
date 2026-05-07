@@ -2,6 +2,7 @@ import React from 'react'
 import { View, FlatList, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
 import { ApplicationRow } from '@/components/admin/ApplicationRow'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
@@ -24,7 +25,10 @@ export default function ApplicationQueue() {
   return (
     <View style={[s.root, { paddingTop: insets.top + 12 }]}>
       <View style={s.header}>
-        <Text variant="label" uppercase color="accent">Review</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          <Ionicons name="arrow-back" size={24} color="#fff" onPress={() => router.back()} style={{ marginRight: 12 }} />
+          <Text variant="label" uppercase color="accent" style={{ marginBottom: 0 }}>Review</Text>
+        </View>
         <Text variant="h1" color="primary">Applications</Text>
         <Text variant="bodySm" color="secondary" style={{ marginTop: 4 }}>
           {applications?.length ?? 0} pending review

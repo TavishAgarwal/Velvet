@@ -10,9 +10,11 @@ import { APP_NAME } from '@/lib/constants'
 import { GhostButton } from '@/components/ui/Button'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { appEvents } from '@/lib/events'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function SubmittedScreen() {
   const insets = useSafeAreaInsets()
+  const { signOut } = useAuth()
   const [checking, setChecking] = useState(false)
 
   // Polling mechanism
@@ -78,10 +80,7 @@ export default function SubmittedScreen() {
       <Animated.View entering={FadeInDown.delay(700).springify()} style={{ width: '100%', marginTop: 'auto' }}>
         <GhostButton 
           title="Sign Out" 
-          onPress={async () => {
-            await supabase.auth.signOut()
-            router.replace('/')
-          }} 
+          onPress={signOut} 
           fullWidth 
         />
       </Animated.View>

@@ -11,6 +11,8 @@ import { BG_BASE, BORDER_DEFAULT, ACCENT } from '@/lib/theme'
 import { formatRelativeTime, truncate } from '@/lib/utils'
 import type { Conversation } from '@/types'
 
+import { Ionicons } from '@expo/vector-icons'
+
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets()
   const { data: conversations, isLoading, isError, error, refetch } = useConversations()
@@ -24,8 +26,6 @@ export default function MessagesScreen() {
         url={item.other_member?.avatar_url}
         name={item.other_member?.display_name}
         size="md"
-        showOnline
-        isOnline={item.other_member?.is_online}
       />
       <View style={s.content}>
         <View style={s.topRow}>
@@ -57,7 +57,12 @@ export default function MessagesScreen() {
     <View style={[s.root, { paddingTop: insets.top + 12 }]}>
       <View style={s.header}>
         <Text variant="label" uppercase color="accent">Inbox</Text>
-        <Text variant="h1" color="primary">Messages</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text variant="h1" color="primary">Messages</Text>
+          <Pressable onPress={() => router.push('/messages/new')} hitSlop={12} style={{ padding: 4, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20 }}>
+            <Ionicons name="add" size={24} color="#fff" />
+          </Pressable>
+        </View>
       </View>
       {isLoading ? (
         <View style={{ paddingHorizontal: 16, gap: 10, paddingTop: 8 }}>

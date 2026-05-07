@@ -9,9 +9,11 @@ import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
 import { APP_NAME } from '@/lib/constants'
 import { GhostButton } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function DeclinedScreen() {
   const insets = useSafeAreaInsets()
+  const { signOut } = useAuth()
 
   return (
     <View style={[s.root, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 }]}>
@@ -34,10 +36,7 @@ export default function DeclinedScreen() {
       <Animated.View entering={FadeInDown.delay(550).springify()} style={{ width: '100%', paddingHorizontal: 32 }}>
         <GhostButton 
           title="Sign Out" 
-          onPress={async () => {
-            await supabase.auth.signOut()
-            router.replace('/')
-          }} 
+          onPress={signOut} 
           fullWidth 
         />
       </Animated.View>

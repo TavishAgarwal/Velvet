@@ -89,11 +89,20 @@ BEGIN
       reviewed_at = now()
   WHERE id = app_id;
 
-  -- If approved, promote the user to member
+  -- If approved, promote the user to member and migrate application data
   IF new_status = 'approved' THEN
-    UPDATE public.profiles
-    SET role = 'member'
-    WHERE id = v_user_id;
+    UPDATE public.profiles p
+    SET role = 'member',
+        display_name = COALESCE(p.display_name, a.full_name),
+        city = COALESCE(p.city, a.city),
+        profession = COALESCE(p.profession, a.profession),
+        company = COALESCE(p.company, a.company),
+        linkedin_url = COALESCE(p.linkedin_url, a.linkedin_url),
+        instagram_handle = COALESCE(p.instagram_handle, a.instagram_handle),
+        onboarding_completed = true
+    FROM public.applications a
+    WHERE a.id = app_id
+      AND p.id = a.user_id;
   END IF;
 END;
 $$;

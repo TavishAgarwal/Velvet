@@ -9,6 +9,7 @@ import { StepProgress } from '@/components/application/StepProgress'
 import { useApplication } from '@/contexts/ApplicationContext'
 import { BG_BASE } from '@/lib/theme'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
+import { appEvents } from '@/lib/events'
 
 export default function ApplyStep4() {
   const insets = useSafeAreaInsets()
@@ -49,8 +50,11 @@ export default function ApplyStep4() {
 
         const { error } = await supabase.from('applications').insert(payload)
         if (error) throw error
+
+        appEvents.emit('applicationStatusChanged')
+      } else {
+        router.replace('/apply/submitted')
       }
-      router.replace('/apply/submitted')
     } catch (err) {
       console.error('[Apply] Submission error:', err)
       Alert.alert('Error', 'Something went wrong. Please try again.')

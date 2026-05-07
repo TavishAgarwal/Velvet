@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react'
+import { router } from 'expo-router'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { queryClient } from '@/lib/queryClient'
 import { MOCK_CURRENT_USER } from '@/lib/mockData'

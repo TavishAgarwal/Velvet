@@ -329,43 +329,45 @@ function RootLayout() {
     // Wait until auth state is known AND router is fully mounted
     if (isAuthed === null || !navigationState?.key) return
 
-    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'apply' || segments[0] === undefined || (segments as string[])[0] === ''
+    const isPublicRoute = segments[0] === '(auth)' || segments[0] === undefined || (segments as string[])[0] === ''
+    const isAuthFlowRoute = isPublicRoute || segments[0] === 'apply' || segments[0] === '(onboarding)'
 
     if (!isAuthed) {
-      if (!inAuthGroup) {
-        router.replace('/')
+      // Unauthenticated users can only be on public routes
+      if (!isPublicRoute) {
+        setTimeout(() => router.replace('/'), 0)
       }
     } else if (isAuthed) {
       if (userRole === 'applicant') {
         if (applicationStatus === 'approved') {
           if (onboardingCompleted === false) {
-             if (segments[0] !== '(onboarding)') router.replace('/(onboarding)')
+             if (segments[0] !== '(onboarding)') setTimeout(() => router.replace('/(onboarding)'), 0)
           } else {
-             if (inAuthGroup || segments[0] === '(onboarding)') router.replace('/(tabs)')
+             if (isAuthFlowRoute) setTimeout(() => router.replace('/(tabs)'), 0)
           }
         } else if (applicationStatus === 'declined') {
-          if (segments[0] !== 'apply' || segments[1] !== 'declined') router.replace('/apply/declined')
+          if (segments[0] !== 'apply' || segments[1] !== 'declined') setTimeout(() => router.replace('/apply/declined'), 0)
         } else if (applicationStatus === 'pending') {
-          if (segments[0] !== 'apply' || segments[1] !== 'submitted') router.replace('/apply/submitted')
+          if (segments[0] !== 'apply' || segments[1] !== 'submitted') setTimeout(() => router.replace('/apply/submitted'), 0)
         } else {
           // status === 'none'
           if (segments[0] !== 'apply' || segments[1] === 'submitted' || segments[1] === 'declined') {
-            router.replace('/apply')
+            setTimeout(() => router.replace('/apply'), 0)
           }
         }
       } else if (userRole === 'admin') {
-        if (inAuthGroup || segments[0] === '(onboarding)') {
-          router.replace('/admin')
+        if (isAuthFlowRoute) {
+          setTimeout(() => router.replace('/admin'), 0)
         }
       } else {
         // member
         if (onboardingCompleted === false) {
           if (segments[0] !== '(onboarding)') {
-            router.replace('/(onboarding)')
+            setTimeout(() => router.replace('/(onboarding)'), 0)
           }
         } else {
-          if (inAuthGroup || segments[0] === '(onboarding)') {
-            router.replace('/(tabs)')
+          if (isAuthFlowRoute) {
+            setTimeout(() => router.replace('/(tabs)'), 0)
           }
         }
       }

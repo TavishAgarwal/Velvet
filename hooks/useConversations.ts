@@ -7,11 +7,11 @@ export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: async (): Promise<Conversation[]> => {
-      if (!isSupabaseEnabled) return MOCK_CONVERSATIONS
+      if (!isSupabaseEnabled) return []
 
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return MOCK_CONVERSATIONS
+        if (!user) return []
 
         const { data, error } = await supabase
           .from('conversations')
@@ -20,7 +20,7 @@ export function useConversations() {
           .order('last_message_at', { ascending: false })
 
         if (error) throw error
-        if (!data || data.length === 0) return MOCK_CONVERSATIONS
+        if (!data || data.length === 0) return []
 
         // Post-process: set other_member to whichever member is NOT the current user
         return (data ?? []).map((conv: any) => ({
@@ -30,8 +30,8 @@ export function useConversations() {
           member_2: undefined,
         })) as Conversation[]
       } catch {
-        // Schema not set up or relationship error — use mock data
-        return MOCK_CONVERSATIONS
+        // Schema not set up or relationship error
+        return []
       }
     },
   })

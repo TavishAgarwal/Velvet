@@ -22,7 +22,7 @@ export default function MembersScreen() {
       onPress={() => router.push(`/member/${item.id}`)}
       style={({ pressed }) => [s.memberRow, pressed && { opacity: 0.7 }]}
     >
-      <Avatar url={item.avatar_url} name={item.display_name} size="md" showOnline isOnline={item.is_online} />
+      <Avatar url={item.avatar_url} name={item.display_name} size="md" />
       <View style={s.memberInfo}>
         <Text variant="body" color="primary" style={{ fontWeight: '600' }}>{item.display_name}</Text>
         <Text variant="bodySm" color="secondary">

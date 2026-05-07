@@ -99,10 +99,9 @@ export default function ChatScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
         <Pressable onPress={() => otherMember && router.push(`/member/${otherMember.id}`)} style={s.headerProfile}>
-          <Avatar url={otherMember?.avatar_url} name={otherMember?.display_name} size="sm" showOnline isOnline={otherMember?.is_online} />
+          <Avatar url={otherMember?.avatar_url} name={otherMember?.display_name} size="sm" />
           <View>
             <Text variant="body" color="primary" style={{ fontWeight: '600' }}>{otherMember?.display_name ?? 'Unknown'}</Text>
-            <Text variant="caption" color="tertiary">{otherMember?.is_online ? 'Online' : 'Offline'}</Text>
           </View>
         </Pressable>
       </View>

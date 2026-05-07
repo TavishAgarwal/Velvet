@@ -28,84 +28,58 @@ const DEMO_USER_ID = 'demo-user-00000000-0000-0000-0000-000000000000'
 
 export const MOCK_PROFILES: Profile[] = [
   {
-    id: 'p1', email: 'sophia@example.com', display_name: 'Sophia Chen',
-    avatar_url: null, city: 'San Francisco', profession: 'Venture Partner',
-    company: 'Sequoia Capital', linkedin_url: null, instagram_handle: '@sophiachen',
-    bio: 'Investing in the future of human creativity. Previously Google X.',
-    interests: ['Technology', 'Art & Design', 'Travel'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 3,
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567801', email: 'priya.sharma@demo.velvet', display_name: 'Priya Sharma',
+    avatar_url: null, city: 'Mumbai', profession: 'Venture Capitalist',
+    company: 'Elevation Capital', linkedin_url: null, instagram_handle: 'priyasharma',
+    bio: 'Early-stage investor focused on consumer and fintech.\nPreviously built two companies from zero to exit.',
+    interests: [], role: 'member', invite_code: null, invited_by: null, invite_count: 3,
     is_online: true, last_seen_at: new Date().toISOString(),
-    onboarding_completed: true, created_at: daysAgo(90), updated_at: daysAgo(2),
+    onboarding_completed: true, created_at: daysAgo(14), updated_at: daysAgo(0),
   },
   {
-    id: 'p2', email: 'marcus@example.com', display_name: 'Marcus Rivera',
-    avatar_url: null, city: 'New York', profession: 'Creative Director',
-    company: 'IDEO', linkedin_url: null, instagram_handle: '@marcusrivera',
-    bio: 'Design is how we treat each other. Formerly Nike, Apple.',
-    interests: ['Art & Design', 'Architecture', 'Fashion'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 2,
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567802', email: 'james.okafor@demo.velvet', display_name: 'James Okafor',
+    avatar_url: null, city: 'Lagos', profession: 'Creative Director',
+    company: 'Studio Okafor', linkedin_url: null, instagram_handle: null,
+    bio: 'Running a design studio working with global brands.\nObsessed with African contemporary art and typography.',
+    interests: [], role: 'member', invite_code: null, invited_by: null, invite_count: 0,
     is_online: false, last_seen_at: daysAgo(0),
-    onboarding_completed: true, created_at: daysAgo(75), updated_at: daysAgo(1),
+    onboarding_completed: true, created_at: daysAgo(10), updated_at: daysAgo(0),
   },
   {
-    id: 'p3', email: 'amara@example.com', display_name: 'Amara Okafor',
-    avatar_url: null, city: 'London', profession: 'Documentary Filmmaker',
-    company: null, linkedin_url: null, instagram_handle: '@amarafilms',
-    bio: 'Telling stories that need to be told. Sundance 2024 alum.',
-    interests: ['Film', 'Travel', 'Literature'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 1,
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567803', email: 'sofia.reyes@demo.velvet', display_name: 'Sofia Reyes',
+    avatar_url: null, city: 'Mexico City', profession: 'Founder',
+    company: 'Noma Health', linkedin_url: null, instagram_handle: null,
+    bio: 'Building the future of preventative healthcare in Latin America.\nYC S23. Dog person.',
+    interests: [], role: 'member', invite_code: null, invited_by: null, invite_count: 0,
     is_online: true, last_seen_at: new Date().toISOString(),
-    onboarding_completed: true, created_at: daysAgo(60), updated_at: daysAgo(3),
+    onboarding_completed: true, created_at: daysAgo(7), updated_at: daysAgo(0),
   },
   {
-    id: 'p4', email: 'julian@example.com', display_name: 'Julian Park',
-    avatar_url: null, city: 'Los Angeles', profession: 'Architect',
-    company: 'Foster + Partners', linkedin_url: null, instagram_handle: null,
-    bio: 'Building spaces that breathe. Sustainability first, always.',
-    interests: ['Architecture', 'Art & Design', 'Wellness'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 0,
-    is_online: false, last_seen_at: daysAgo(1),
-    onboarding_completed: true, created_at: daysAgo(45), updated_at: daysAgo(5),
-  },
-  {
-    id: 'p5', email: 'nina@example.com', display_name: 'Nina Alexeeva',
-    avatar_url: null, city: 'Berlin', profession: 'Music Producer',
-    company: null, linkedin_url: null, instagram_handle: '@ninasound',
-    bio: 'Sound is sculpture. Grammy-nominated engineer turned producer.',
-    interests: ['Music', 'Technology', 'Film'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 4,
-    is_online: true, last_seen_at: new Date().toISOString(),
-    onboarding_completed: true, created_at: daysAgo(30), updated_at: daysAgo(0),
-  },
-  {
-    id: 'p6', email: 'david@example.com', display_name: 'David Moreau',
-    avatar_url: null, city: 'Paris', profession: 'Chef & Restaurateur',
-    company: 'Maison Moreau', linkedin_url: null, instagram_handle: '@chefmoreau',
-    bio: 'Two Michelin stars. Cooking is conversation without words.',
-    interests: ['Food & Wine', 'Travel', 'Art & Design'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 2,
-    is_online: false, last_seen_at: daysAgo(2),
-    onboarding_completed: true, created_at: daysAgo(55), updated_at: daysAgo(4),
-  },
-  {
-    id: 'p7', email: 'elena@example.com', display_name: 'Elena Vasquez',
-    avatar_url: null, city: 'Miami', profession: 'Gallerist',
-    company: 'Vasquez Contemporary', linkedin_url: null, instagram_handle: '@elenavasquez',
-    bio: 'Bridging Latin American art and the world. Art Basel committee.',
-    interests: ['Art & Design', 'Fashion', 'Travel'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 5,
-    is_online: true, last_seen_at: new Date().toISOString(),
-    onboarding_completed: true, created_at: daysAgo(80), updated_at: daysAgo(1),
-  },
-  {
-    id: 'p8', email: 'kai@example.com', display_name: 'Kai Nakamura',
-    avatar_url: null, city: 'Tokyo', profession: 'AI Researcher',
-    company: 'DeepMind', linkedin_url: null, instagram_handle: null,
-    bio: 'Working on alignment. The future is careful optimism.',
-    interests: ['Technology', 'Science', 'Literature'],
-    role: 'member', invite_code: null, invited_by: null, invite_count: 1,
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567804', email: 'arjun.mehta@demo.velvet', display_name: 'Arjun Mehta',
+    avatar_url: null, city: 'Bangalore', profession: 'Engineer',
+    company: 'Vercel', linkedin_url: null, instagram_handle: null,
+    bio: 'Infrastructure engineer by day, electronic music producer\nby night. Currently building in public.',
+    interests: [], role: 'member', invite_code: null, invited_by: null, invite_count: 0,
     is_online: false, last_seen_at: daysAgo(0),
-    onboarding_completed: true, created_at: daysAgo(20), updated_at: daysAgo(0),
+    onboarding_completed: true, created_at: daysAgo(5), updated_at: daysAgo(0),
+  },
+  {
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567805', email: 'chloe.dubois@demo.velvet', display_name: 'Chloe Dubois',
+    avatar_url: null, city: 'Paris', profession: 'Author',
+    company: null, linkedin_url: null, instagram_handle: null,
+    bio: 'Writing a book about the intersection of technology and\nsolitude. Former journalist at Le Monde.',
+    interests: [], role: 'member', invite_code: null, invited_by: null, invite_count: 0,
+    is_online: true, last_seen_at: new Date().toISOString(),
+    onboarding_completed: true, created_at: daysAgo(3), updated_at: daysAgo(0),
+  },
+  {
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567806', email: 'marcus.webb@demo.velvet', display_name: 'Marcus Webb',
+    avatar_url: null, city: 'New York', profession: 'Angel Investor',
+    company: null, linkedin_url: null, instagram_handle: null,
+    bio: 'Backed 40+ startups across climate tech and developer tools.\nPartner at Webb Ventures. Avid jazz collector.',
+    interests: [], role: 'member', invite_code: null, invited_by: null, invite_count: 0,
+    is_online: false, last_seen_at: daysAgo(0),
+    onboarding_completed: true, created_at: daysAgo(1), updated_at: daysAgo(0),
   },
 ]
 
@@ -125,41 +99,31 @@ export const MOCK_CURRENT_USER: Profile = {
 
 export const MOCK_EVENTS: Event[] = [
   {
-    id: 'e1', title: 'Rooftop Supper Club',
-    description: 'An intimate 12-seat dinner on a private Manhattan rooftop. Guest chef from Eleven Madison Park. Dress code: elegant casual.',
-    event_type: 'in_person', location: 'The Ned NoMad, NYC', address: '1170 Broadway, New York, NY',
+    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901', title: 'The Velvet Dinner — Mumbai Edition',
+    description: 'An intimate dinner for 20 members at a private residence in Bandra. Good food, better conversations. No agenda, no pitches.',
+    event_type: 'in_person', location: 'Private Residence, Bandra West', address: 'Bandra West, Mumbai, Maharashtra',
     virtual_link: null, cover_image_url: null,
-    starts_at: daysFromNow(5), ends_at: hoursFromNow(5 * 24 + 3),
-    capacity: 12, rsvp_count: 9, is_published: true,
-    created_by: 'p1', created_at: daysAgo(7), updated_at: daysAgo(2),
+    starts_at: daysAgo(5), ends_at: new Date(Date.now() - 5 * 86_400_000 + 3 * 3_600_000).toISOString(),
+    capacity: 20, rsvp_count: 12, is_published: true,
+    created_by: DEMO_USER_ID, created_at: daysAgo(10), updated_at: daysAgo(0),
   },
   {
-    id: 'e2', title: 'Founders\' Fireside',
-    description: 'Candid conversation with three founders who\'ve scaled past $100M. No slides, no pitches — just real talk over whiskey.',
-    event_type: 'in_person', location: 'Soho House, London', address: '76 Dean Street, London W1',
+    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678902', title: 'Founders & Investors: Fireside Chat',
+    description: 'An off-the-record conversation between founders and investors in the Velvet community. Chatham House rules. Bring your honest questions.',
+    event_type: 'virtual', location: 'Zoom', address: null,
+    virtual_link: 'https://zoom.us/j/velvet-demo', cover_image_url: null,
+    starts_at: daysFromNow(4), ends_at: new Date(Date.now() + 4 * 86_400_000 + 2 * 3_600_000).toISOString(),
+    capacity: 50, rsvp_count: 23, is_published: true,
+    created_by: DEMO_USER_ID, created_at: daysAgo(2), updated_at: daysAgo(0),
+  },
+  {
+    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678903', title: 'Velvet Rooftop — New York',
+    description: 'Summer rooftop gathering for Velvet members in NYC and anyone visiting. Casual drinks, no dress code, just interesting people.',
+    event_type: 'in_person', location: 'The Standard Hotel, Rooftop', address: '848 Washington St, New York, NY 10014',
     virtual_link: null, cover_image_url: null,
-    starts_at: daysFromNow(12), ends_at: hoursFromNow(12 * 24 + 2),
-    capacity: 30, rsvp_count: 22, is_published: true,
-    created_by: 'p2', created_at: daysAgo(5), updated_at: daysAgo(1),
-  },
-  {
-    id: 'e3', title: 'Gallery Walk — Emerging Artists',
-    description: 'Private viewing of five emerging artists before their public debut. Champagne reception, curator-led tour.',
-    event_type: 'in_person', location: 'Vasquez Contemporary, Miami',
-    address: '318 NW 23rd St, Miami, FL', virtual_link: null, cover_image_url: null,
-    starts_at: daysFromNow(18), ends_at: hoursFromNow(18 * 24 + 2),
-    capacity: 40, rsvp_count: 31, is_published: true,
-    created_by: 'p7', created_at: daysAgo(10), updated_at: daysAgo(3),
-  },
-  {
-    id: 'e4', title: 'AI × Creativity — Virtual Panel',
-    description: 'How is AI reshaping creative work? A cross-disciplinary conversation with artists, engineers, and writers.',
-    event_type: 'virtual', location: null, address: null,
-    virtual_link: 'https://meet.velvet.club/ai-creativity',
-    cover_image_url: null,
-    starts_at: daysFromNow(8), ends_at: hoursFromNow(8 * 24 + 1.5),
-    capacity: 100, rsvp_count: 67, is_published: true,
-    created_by: 'p8', created_at: daysAgo(3), updated_at: daysAgo(0),
+    starts_at: daysFromNow(21), ends_at: new Date(Date.now() + 21 * 86_400_000 + 4 * 3_600_000).toISOString(),
+    capacity: 40, rsvp_count: 8, is_published: true,
+    created_by: DEMO_USER_ID, created_at: daysAgo(1), updated_at: daysAgo(0),
   },
 ]
 
@@ -167,54 +131,67 @@ export const MOCK_EVENTS: Event[] = [
 
 export const MOCK_CONVERSATIONS: Conversation[] = [
   {
-    id: 'c1', member_1_id: DEMO_USER_ID, member_2_id: 'p1',
-    last_message: 'Would love to meet at the supper club next week!',
-    last_message_at: hoursFromNow(-2), created_at: daysAgo(10),
-    other_member: MOCK_PROFILES[0], unread_count: 1,
+    id: 'c3d4e5f6-a7b8-9012-cdef-123456789001', member_1_id: DEMO_USER_ID, member_2_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567801',
+    last_message: 'Would love to connect when you are next in the city.',
+    last_message_at: hoursFromNow(-2), created_at: daysAgo(3),
+    other_member: MOCK_PROFILES[0], unread_count: 0,
   },
   {
-    id: 'c2', member_1_id: DEMO_USER_ID, member_2_id: 'p3',
-    last_message: 'Your documentary was incredible. Let\'s grab coffee.',
-    last_message_at: hoursFromNow(-8), created_at: daysAgo(6),
+    id: 'c3d4e5f6-a7b8-9012-cdef-123456789002', member_1_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567802', member_2_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567805',
+    last_message: 'Send me the piece when it is ready. I would love to read it.',
+    last_message_at: hoursFromNow(-6), created_at: daysAgo(1),
+    other_member: MOCK_PROFILES[4], unread_count: 0,
+  },
+  {
+    id: 'c3d4e5f6-a7b8-9012-cdef-123456789003', member_1_id: DEMO_USER_ID, member_2_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567803',
+    last_message: 'Perfect, see you at the gallery at 7!',
+    last_message_at: hoursFromNow(-1), created_at: daysAgo(1),
     other_member: MOCK_PROFILES[2], unread_count: 0,
   },
   {
-    id: 'c3', member_1_id: 'p5', member_2_id: DEMO_USER_ID,
-    last_message: 'Sent you the playlist ✨',
-    last_message_at: daysAgo(1), created_at: daysAgo(4),
-    other_member: MOCK_PROFILES[4], unread_count: 2,
-  },
-  {
-    id: 'c4', member_1_id: DEMO_USER_ID, member_2_id: 'p7',
-    last_message: 'See you at the gallery opening!',
-    last_message_at: daysAgo(2), created_at: daysAgo(8),
-    other_member: MOCK_PROFILES[6], unread_count: 0,
+    id: 'c3d4e5f6-a7b8-9012-cdef-123456789004', member_1_id: DEMO_USER_ID, member_2_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567806',
+    last_message: 'I\'ll send over the pitch deck tomorrow morning.',
+    last_message_at: hoursFromNow(-10), created_at: daysAgo(2),
+    other_member: MOCK_PROFILES[5], unread_count: 0,
   },
 ]
 
 // ─── Messages (for a specific conversation) ────────────────────────────────────
 
 export function getMockMessages(conversationId: string): Message[] {
-  if (conversationId === 'c1') {
+  if (conversationId === 'c3d4e5f6-a7b8-9012-cdef-123456789001') {
     return [
-      { id: 'm1', conversation_id: 'c1', sender_id: DEMO_USER_ID, content: 'Hey Sophia! Loved your talk at the last event.', is_read: true, created_at: daysAgo(3) },
-      { id: 'm2', conversation_id: 'c1', sender_id: 'p1', content: 'Thank you! It was such an engaged crowd.', is_read: true, created_at: daysAgo(3) },
-      { id: 'm3', conversation_id: 'c1', sender_id: 'p1', content: 'Are you going to the rooftop supper club?', is_read: true, created_at: daysAgo(2) },
-      { id: 'm4', conversation_id: 'c1', sender_id: DEMO_USER_ID, content: 'Absolutely — already RSVP\'d!', is_read: true, created_at: daysAgo(2) },
-      { id: 'm5', conversation_id: 'c1', sender_id: 'p1', content: 'Would love to meet at the supper club next week!', is_read: false, created_at: hoursFromNow(-2) },
+      { id: 'm1', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567801', content: 'Hey! Just saw your profile on Velvet. Love what you are building — are you based in Mumbai?', is_read: true, created_at: daysAgo(3) },
+      { id: 'm2', conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Hi Priya! Not based there but visiting next month for a few meetings. Would love to grab coffee if you are around.', is_read: true, created_at: new Date(Date.now() - 3 * 86_400_000 + 20 * 60_000).toISOString() },
+      { id: 'm3', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567801', content: 'Absolutely. I am pretty free that week. What brings you to Mumbai?', is_read: true, created_at: daysAgo(2) },
+      { id: 'm4', conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Some investor meetings and a conference on fintech. The ecosystem here has grown a lot in the last two years.', is_read: true, created_at: new Date(Date.now() - 2 * 86_400_000 + 15 * 60_000).toISOString() },
+      { id: 'm5', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567801', content: 'It really has. We have made 8 fintech bets in the last 18 months alone. Let me know your dates and we can find a time.', is_read: true, created_at: new Date(Date.now() - 2 * 3_600_000 - 30 * 60_000).toISOString() },
+      { id: 'm6', conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Would love to connect when you are next in the city.', is_read: true, created_at: hoursFromNow(-2) },
     ]
   }
-  if (conversationId === 'c2') {
+  if (conversationId === 'c3d4e5f6-a7b8-9012-cdef-123456789002') {
     return [
-      { id: 'm6', conversation_id: 'c2', sender_id: DEMO_USER_ID, content: 'Amara — just watched your Sundance piece. Phenomenal work.', is_read: true, created_at: daysAgo(5) },
-      { id: 'm7', conversation_id: 'c2', sender_id: 'p3', content: 'That means so much, thank you 🙏', is_read: true, created_at: daysAgo(5) },
-      { id: 'm8', conversation_id: 'c2', sender_id: DEMO_USER_ID, content: 'Your documentary was incredible. Let\'s grab coffee.', is_read: true, created_at: hoursFromNow(-8) },
+      { id: 'm7', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567805', content: 'James — I have been following your studio work for a while. The Adidas campaign was stunning.', is_read: true, created_at: daysAgo(1) },
+      { id: 'm8', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567802', content: 'Thank you Chloe. That one took almost four months. I loved your piece on loneliness in the attention economy by the way — very well argued.', is_read: true, created_at: new Date(Date.now() - 86_400_000 + 40 * 60_000).toISOString() },
+      { id: 'm9', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567805', content: 'That means a lot. I am working on a follow-up about solitude versus loneliness. The distinction matters more than people think.', is_read: true, created_at: hoursFromNow(-7) },
+      { id: 'm10', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567802', content: 'Send me the piece when it is ready. I would love to read it.', is_read: true, created_at: hoursFromNow(-6) },
     ]
   }
-  return [
-    { id: `m-${conversationId}-1`, conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Hey! Great to connect.', is_read: true, created_at: daysAgo(3) },
-    { id: `m-${conversationId}-2`, conversation_id: conversationId, sender_id: 'p5', content: 'Likewise! Looking forward to the next event.', is_read: true, created_at: daysAgo(2) },
-  ]
+  if (conversationId === 'c3d4e5f6-a7b8-9012-cdef-123456789003') {
+    return [
+      { id: 'm11', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567803', content: 'Are you still planning to go to the contemporary art opening tonight?', is_read: true, created_at: hoursFromNow(-3) },
+      { id: 'm12', conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Yes! I was just about to ask you. Want to meet outside?', is_read: true, created_at: hoursFromNow(-2) },
+      { id: 'm13', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567803', content: 'Perfect, see you at the gallery at 7!', is_read: true, created_at: hoursFromNow(-1) },
+    ]
+  }
+  if (conversationId === 'c3d4e5f6-a7b8-9012-cdef-123456789004') {
+    return [
+      { id: 'm14', conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Hi Marcus, loved your insights on AI agents at the summit last week.', is_read: true, created_at: daysAgo(1) },
+      { id: 'm15', conversation_id: conversationId, sender_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567806', content: 'Thanks! Always happy to talk about where this is heading. What are you building right now?', is_read: true, created_at: hoursFromNow(-20) },
+      { id: 'm16', conversation_id: conversationId, sender_id: DEMO_USER_ID, content: 'Working on an autonomous coding platform. I\'ll send over the pitch deck tomorrow morning.', is_read: true, created_at: hoursFromNow(-10) },
+    ]
+  }
+  return []
 }
 
 // ─── Notifications ─────────────────────────────────────────────────────────────
@@ -250,19 +227,14 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
 
 export const MOCK_INVITES: Invite[] = [
   {
-    id: 'i1', code: 'VELVET-A7K2', created_by: DEMO_USER_ID,
-    used_by: 'p5', used_at: daysAgo(3), expires_at: daysFromNow(30),
-    created_at: daysAgo(10), used_by_profile: MOCK_PROFILES[4],
+    id: 'i1', code: 'PRIYA001', created_by: 'a1b2c3d4-e5f6-7890-abcd-ef1234567801',
+    used_by: 'a1b2c3d4-e5f6-7890-abcd-ef1234567804', used_at: daysAgo(5), expires_at: null,
+    created_at: daysAgo(10), used_by_profile: MOCK_PROFILES[3],
   },
   {
-    id: 'i2', code: 'VELVET-M9P4', created_by: DEMO_USER_ID,
-    used_by: null, used_at: null, expires_at: daysFromNow(20),
-    created_at: daysAgo(5),
-  },
-  {
-    id: 'i3', code: 'VELVET-X3L8', created_by: DEMO_USER_ID,
-    used_by: null, used_at: null, expires_at: daysFromNow(25),
-    created_at: daysAgo(2),
+    id: 'i2', code: 'MARCUS08', created_by: 'a1b2c3d4-e5f6-7890-abcd-ef1234567806',
+    used_by: null, used_at: null, expires_at: daysFromNow(30),
+    created_at: daysAgo(1),
   },
 ]
 
