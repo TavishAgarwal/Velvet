@@ -9,7 +9,7 @@
  *   2. Update this file to navigate to the next step instead of completing onboarding.
  *   3. Complete onboarding only in the last step.
  */
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   View, Pressable, TextInput, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -19,6 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/Text'
 import { supabase } from '@/lib/supabase'
 import { track } from '@/lib/analytics'
+import { appEvents } from '@/lib/events'
+import { queryClient } from '@/lib/queryClient'
 import { ACCENT, ACCENT_DIM, ACCENT_BORDER, BG, SURFACE, BORDER } from '@/lib/theme'
 import { LinearGradient } from 'expo-linear-gradient'
 import { adjustBrightness } from '@/lib/utils'
@@ -30,41 +32,70 @@ export default function OnboardingScreen() {
   const [displayName, setDisplayName] = useState('')
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   track('onboarding_started')
 
+  async function handleSignOut() {
+    try {
+      await supabase.auth.signOut()
+      queryClient.clear()
+    } catch {
+      // Even if sign-out fails, the layout guard will handle it
+    }
+  }
+
   async function complete(name?: string) {
+    if (loading) return
     setLoading(true)
     setError(null)
 
-    const { error: err } = await supabase.auth.updateUser({
-      data: {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) {
+        setError('Session expired. Please sign in again.')
+        setLoading(false)
+        return
+      }
+
+      const userId = session.user.id
+
+      const updatePayload: Record<string, any> = {
+        id: userId,
         onboarding_completed: true,
-        full_name: name?.trim() || undefined,
-      },
-    })
+      }
+      if (name?.trim()) updatePayload.display_name = name.trim()
 
-    if (err) {
+      // Use upsert so this works even if the profile row wasn't created by a trigger
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .upsert(updatePayload, { onConflict: 'id' })
+
+      if (profileErr) {
+        console.error('Profile upsert error:', profileErr)
+        setError('Could not save. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      track('onboarding_completed', { skipped: !name?.trim() })
+      
+      // Signal the root layout directly via event bus.
+      // The layout will re-fetch the profile and its route guard
+      // will navigate to /(tabs) automatically.
+      appEvents.emit('onboardingCompleted')
+
+      // Safety timeout: if the layout hasn't redirected us away within 8 seconds,
+      // something is wrong. Reset the spinner so the user isn't stuck.
+      timeoutRef.current = setTimeout(() => {
+        setLoading(false)
+        setError('Navigation timed out. Try again or sign out below.')
+      }, 8000)
+    } catch (e: any) {
+      console.error('Onboarding complete error:', e)
+      setError(e.message || 'An unexpected error occurred.')
       setLoading(false)
-      setError('Could not save. Please try again.')
-      return
     }
-
-    // Also upsert the profiles table (best-effort, non-blocking)
-    if (name?.trim()) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase
-            .from('profiles')
-            .upsert({ id: user.id, display_name: name.trim() })
-        }
-      } catch { /* profile upsert failure is non-fatal; metadata already saved above */ }
-    }
-
-    track('onboarding_completed', { skipped: !name?.trim() })
-    setLoading(false)
-    // _layout.tsx auth guard detects onboarding_completed = true and routes to (tabs)
   }
 
   return (
@@ -135,6 +166,10 @@ export default function OnboardingScreen() {
           <Pressable onPress={() => complete()} disabled={loading} style={{ alignItems: 'center', paddingVertical: 6 }}>
             <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)' }}>Skip for now</Text>
           </Pressable>
+
+          <Pressable onPress={handleSignOut} style={{ alignItems: 'center', paddingVertical: 8 }}>
+            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>Sign out</Text>
+          </Pressable>
         </Animated.View>
       </View>
     </KeyboardAvoidingView>
@@ -151,8 +186,8 @@ const s = StyleSheet.create({
     width: 80, height: 80, borderRadius: 24,
     borderWidth: 1.5, alignItems: 'center', justifyContent: 'center',
   },
-  title:    { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.38)', textAlign: 'center', lineHeight: 21, maxWidth: 280 },
+  title:    { fontSize: 28, fontFamily: Fonts.playfairBold, color: '#fff', letterSpacing: -0.5, textAlign: 'center', lineHeight: 36, paddingTop: 8 },
+  subtitle: { fontSize: 14, fontFamily: Fonts.dmRegular, color: 'rgba(255,255,255,0.38)', textAlign: 'center', lineHeight: 21, maxWidth: 280 },
 
   fieldGroup: { gap: 8 },
   label: { fontSize: 11, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' },

@@ -13,12 +13,32 @@ import { APP_NAME } from '@/lib/constants'
 import { getGreeting, formatEventDate } from '@/lib/utils'
 import { useMembers } from '@/hooks/useMembers'
 import { useEvents } from '@/hooks/useEvents'
+import { useNotifications } from '@/hooks/useNotifications'
+import { ErrorState } from '@/components/ui/ErrorState'
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const greeting = getGreeting()
-  const { data: members, isLoading: membersLoading } = useMembers()
-  const { data: events, isLoading: eventsLoading } = useEvents()
+  const { data: members, isLoading: membersLoading, isError: membersError, refetch: refetchMembers } = useMembers()
+  const { data: events, isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents } = useEvents()
+  const { data: notifications } = useNotifications()
+  const unreadCount = notifications?.filter(n => !n.is_read).length ?? 0
+
+  const hasError = membersError || eventsError
+  if (hasError) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top + 16 }]}>
+        <View style={s.header}>
+          <Text variant="label" uppercase color="accent">{APP_NAME}</Text>
+          <Text variant="h1" color="primary">{greeting}</Text>
+        </View>
+        <ErrorState
+          message="Could not load feed data."
+          onRetry={() => { refetchMembers(); refetchEvents() }}
+        />
+      </View>
+    )
+  }
 
   const newMembers = members?.slice(0, 5) ?? []
   const upcomingEvents = events?.slice(0, 2) ?? []
@@ -31,8 +51,22 @@ export default function HomeScreen() {
   return (
     <ScrollView style={s.root} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }}>
       <View style={s.header}>
-        <Text variant="label" uppercase color="accent">{APP_NAME}</Text>
-        <Text variant="h1" color="primary">{greeting}</Text>
+        <View style={s.headerRow}>
+          <View>
+            <Text variant="label" uppercase color="accent">{APP_NAME}</Text>
+            <Text variant="h1" color="primary">{greeting}</Text>
+          </View>
+          <Pressable onPress={() => router.push('/notifications')} hitSlop={12} style={s.bellWrap}>
+            <Ionicons name="notifications-outline" size={24} color="#fff" />
+            {unreadCount > 0 && (
+              <View style={s.badge}>
+                <Text variant="caption" color="inverse" style={{ fontSize: 9, fontWeight: '700' }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
       </View>
 
       {/* New Members */}
@@ -119,6 +153,13 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: BG_BASE },
   header: { paddingHorizontal: 24, marginBottom: 24, gap: 4 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  bellWrap: { position: 'relative', padding: 4, marginTop: 4 },
+  badge: {
+    position: 'absolute', top: 0, right: 0,
+    backgroundColor: ACCENT, borderRadius: 8, minWidth: 16, height: 16,
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+  },
   section: { paddingHorizontal: 16 },
   sectionLabel: { marginLeft: 8, marginBottom: 12 },
   memberRow: { paddingLeft: 8, paddingRight: 16, gap: 16 },

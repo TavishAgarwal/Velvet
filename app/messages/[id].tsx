@@ -6,11 +6,13 @@ import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
 import { Avatar } from '@/components/ui/Avatar'
 import { TextInputField } from '@/components/ui/TextInputField'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, ACCENT_DIM, BG_BASE, BG_SURFACE, BORDER_DEFAULT, TEXT_PRIMARY } from '@/lib/theme'
 import { formatRelativeTime } from '@/lib/utils'
 import { Fonts } from '@/lib/typography'
 import { useMessages, sendMessage } from '@/hooks/useMessages'
-import { useMember } from '@/hooks/useMembers'
+import { useConversation } from '@/hooks/useConversation'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Message } from '@/types'
 
@@ -22,8 +24,13 @@ export default function ChatScreen() {
 
   const { profile } = useAuth()
   const currentUserId = profile?.id ?? ''
+
+  // id is always a conversationId — member profile's "Send Message" button
+  // calls ensureConversation() first and passes the resulting conversation ID
+  const { data: conversation, isLoading: convLoading, isError: convError, error: convErr, refetch: refetchConv } = useConversation(id)
   const { data: messages = [] } = useMessages(id)
-  const { data: otherMember } = useMember(id)
+
+  const otherMember = conversation?.other_member
 
   const handleSend = async () => {
     if (!text.trim() || !profile) return
@@ -50,6 +57,40 @@ export default function ChatScreen() {
     )
   }
 
+  // Show loading/error states while conversation loads
+  if (convLoading) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top }]}>
+        <View style={s.header}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </Pressable>
+          <View style={s.headerProfile}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            <Text variant="body" color="tertiary">Loading…</Text>
+          </View>
+        </View>
+        <View style={{ paddingHorizontal: 16, gap: 10, paddingTop: 16 }}>
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      </View>
+    )
+  }
+
+  if (convError) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top }]}>
+        <View style={s.header}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </Pressable>
+        </View>
+        <ErrorState message={(convErr as Error)?.message} onRetry={() => refetchConv()} />
+      </View>
+    )
+  }
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       {/* Header */}
@@ -60,7 +101,7 @@ export default function ChatScreen() {
         <Pressable onPress={() => otherMember && router.push(`/member/${otherMember.id}`)} style={s.headerProfile}>
           <Avatar url={otherMember?.avatar_url} name={otherMember?.display_name} size="sm" showOnline isOnline={otherMember?.is_online} />
           <View>
-            <Text variant="body" color="primary" style={{ fontWeight: '600' }}>{otherMember?.display_name ?? 'Loading…'}</Text>
+            <Text variant="body" color="primary" style={{ fontWeight: '600' }}>{otherMember?.display_name ?? 'Unknown'}</Text>
             <Text variant="caption" color="tertiary">{otherMember?.is_online ? 'Online' : 'Offline'}</Text>
           </View>
         </Pressable>
@@ -74,6 +115,14 @@ export default function ChatScreen() {
         renderItem={renderMessage}
         contentContainerStyle={s.messagesList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', paddingTop: 60 }}>
+            <Text variant="body" color="tertiary" align="center">No messages yet</Text>
+            <Text variant="bodySm" color="tertiary" align="center" style={{ marginTop: 4 }}>
+              Send the first message!
+            </Text>
+          </View>
+        }
       />
 
       {/* Input */}
@@ -112,7 +161,7 @@ const s = StyleSheet.create({
     backgroundColor: BG_SURFACE,
   },
   headerProfile: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  messagesList: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
+  messagesList: { paddingHorizontal: 16, paddingVertical: 12, gap: 8, flexGrow: 1 },
   msgRow: { flexDirection: 'row', marginBottom: 4 },
   msgRowMine: { justifyContent: 'flex-end' },
   bubble: { maxWidth: '78%', padding: 12, borderRadius: 18 },

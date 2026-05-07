@@ -1,17 +1,4 @@
-/**
- * Login screen — OTP (passwordless email) authentication.
- *
- * Social login placeholders:
- *   Google and Apple buttons are included with placeholder handlers.
- *   To wire them up:
- *     1. Configure Google/Apple OAuth in your Supabase project → Auth → Providers
- *     2. Add a redirect URL (e.g. myapp://auth/callback)
- *     3. Install expo-web-browser and expo-auth-session
- *     4. Call supabase.auth.signInWithOAuth({ provider: 'google' }) in handleGoogleLogin
- *
- *   To remove a provider, simply delete the corresponding button.
- */
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import {
   View, Pressable, StyleSheet, Dimensions,
   KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -20,6 +7,8 @@ import {
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import { router } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
+import { makeRedirectUri } from 'expo-auth-session'
+import * as Linking from 'expo-linking'
 import { Text } from '@/components/ui/Text'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -33,171 +22,48 @@ import { Fonts } from '@/lib/typography'
 
 const APP_SCHEME = 'velvet'
 
-// Required for OAuth session handling on Android
 WebBrowser.maybeCompleteAuthSession()
-
-
-
-// ─── Disposable email blocklist ───────────────────────────────────────────────
-// Prevents throwaway emails from creating accounts.
-
-const DISPOSABLE_DOMAINS = new Set([
-  'mailinator.com', 'guerrillamail.com', '10minutemail.com', 'tempmail.com',
-  'temp-mail.org', 'yopmail.com', 'trashmail.com', 'trashmail.me', 'maildrop.cc',
-  'mailnesia.com', 'discard.email', 'throwaway.email', 'getnada.com', 'fakeinbox.com',
-  'getairmail.com', 'spam4.me', 'spamgourmet.com', 'dispostable.com', 'filzmail.com',
-])
-
-function normalizeEmail(raw: string): string {
-  const trimmed = raw.trim().toLowerCase()
-  const atIdx = trimmed.lastIndexOf('@')
-  if (atIdx === -1) return trimmed
-  const local = trimmed.slice(0, atIdx)
-  const domain = trimmed.slice(atIdx + 1)
-  const cleanLocal = local.split('+')[0]
-  // Remove dots for Gmail addresses
-  const gmailDomains = ['gmail.com', 'googlemail.com']
-  const finalLocal = gmailDomains.includes(domain) ? cleanLocal.replace(/\./g, '') : cleanLocal
-  return `${finalLocal}@${domain}`
-}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets()
 
-  const [step, setStep] = useState<'email' | 'otp'>('email')
   const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState(['', '', '', '', '', ''])
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [cooldown, setCooldown] = useState(0)
-  const [failedAttempts, setFailedAttempts] = useState(0)
-  const [lockoutEnd, setLockoutEnd] = useState<number | null>(null)
-  const [lockoutLeft, setLockoutLeft] = useState(0)
 
-  const otpRefs = useRef<(RNTextInput | null)[]>([])
-  const emailRef = useRef<RNTextInput>(null)
-
-  // Resend cooldown countdown
-  useEffect(() => {
-    if (cooldown <= 0) return
-    const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [cooldown])
-
-  // Lockout countdown
-  useEffect(() => {
-    if (!lockoutEnd) return
-    const tick = () => {
-      const rem = Math.max(0, Math.ceil((lockoutEnd - Date.now()) / 1000))
-      setLockoutLeft(rem)
-      if (rem === 0) setLockoutEnd(null)
-    }
-    tick()
-    const t = setInterval(tick, 1000)
-    return () => clearInterval(t)
-  }, [lockoutEnd])
-
-  const handleSendOtp = async () => {
-    const normalized = normalizeEmail(email)
-    if (!normalized || !normalized.includes('@') || !normalized.includes('.')) {
-      setError('Enter a valid email address')
+  const handleEmailLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter your email and password.')
       return
     }
-    const domain = normalized.split('@')[1]
-    if (DISPOSABLE_DOMAINS.has(domain)) {
-      setError('Temporary email addresses are not allowed.')
-      return
-    }
-    setLoading(true); setError(null)
+    setLoading(true)
+    setError(null)
     track('login_started')
-    const { error: err } = await supabase.auth.signInWithOtp({ email: normalized })
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    track('otp_sent')
-    setStep('otp')
-    setCooldown(60)
-    setTimeout(() => otpRefs.current[0]?.focus(), 300)
-  }
-
-  const handleVerifyOtp = useCallback(async (code: string) => {
-    if (code.length < 6) return
-    if (lockoutEnd && Date.now() < lockoutEnd) {
-      setError(`Too many attempts. Wait ${Math.ceil((lockoutEnd - Date.now()) / 60000)} minute(s).`)
-      return
-    }
-    setLoading(true); setError(null)
-    const { error: err } = await supabase.auth.verifyOtp({
-      email: normalizeEmail(email),
-      token: code,
-      type: 'email',
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password.trim(),
     })
     setLoading(false)
     if (err) {
-      const next = failedAttempts + 1
-      setFailedAttempts(next)
-      if (next >= 5) {
-        setLockoutEnd(Date.now() + 15 * 60 * 1000)
-        setError('Too many failed attempts. Please wait 15 minutes.')
-      } else {
-        setError(`Invalid code. ${5 - next} attempt${5 - next === 1 ? '' : 's'} left.`)
-      }
-      setOtp(['', '', '', '', '', ''])
-      setTimeout(() => otpRefs.current[0]?.focus(), 50)
+      setError(err.message)
       return
     }
     track('login_success')
-    // _layout.tsx auth guard handles navigation automatically
-  }, [email, lockoutEnd, failedAttempts])
-
-  const handleOtpChange = (val: string, index: number) => {
-    const digit = val.replace(/\D/g, '').slice(-1)
-    const next = [...otp]
-    next[index] = digit
-    setOtp(next)
-    if (digit && index < 5) otpRefs.current[index + 1]?.focus()
-    const code = next.join('')
-    if (code.length === 6 && !next.includes('')) handleVerifyOtp(code)
   }
 
-  const handleOtpKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
-      const next = [...otp]
-      next[index - 1] = ''
-      setOtp(next)
-      otpRefs.current[index - 1]?.focus()
-    }
-  }
-
-  const handleResend = async () => {
-    if (cooldown > 0) return
-    setLoading(true); setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({ email: normalizeEmail(email) })
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    setCooldown(60)
-    setOtp(['', '', '', '', '', ''])
-    setTimeout(() => otpRefs.current[0]?.focus(), 50)
-  }
-
-  const goBack = () => {
-    setStep('email'); setOtp(['', '', '', '', '', ''])
-    setError(null); setFailedAttempts(0); setLockoutEnd(null)
-    setTimeout(() => emailRef.current?.focus(), 150)
-  }
-
-
-
-  // ─── Social login handlers ───────────────────────────────────────────────────
-  // Requires: Supabase → Auth → Providers → Google/Apple enabled
-  // Requires: app.json scheme = 'myapp' (already set) so deep link works
-
-  async function handleOAuthLogin(provider: 'google' | 'apple') {
+  async function handleGoogleLogin() {
     setLoading(true)
     setError(null)
     try {
-      const redirectTo = `${APP_SCHEME}://auth/callback`
+      let redirectTo = Linking.createURL('auth/callback')
+      if (redirectTo.startsWith('http')) {
+        // Force the scheme to match Expo Go if it resolved as HTTP
+        redirectTo = redirectTo.replace(/^https?:\/\//, 'exp://')
+      }
+      console.log('>>> REDIRECT TO URL GENERATED IS:', redirectTo)
       const { data, error: err } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: 'google',
         options: { redirectTo, skipBrowserRedirect: true },
       })
       if (err) throw err
@@ -205,24 +71,43 @@ export default function LoginScreen() {
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo)
       if (result.type === 'success') {
-        const { error: sessionErr } = await supabase.auth.exchangeCodeForSession(result.url)
-        if (sessionErr) throw sessionErr
-        // _layout.tsx auth guard handles navigation automatically
+        const extractParam = (url: string, param: string) => {
+          const match = url.match(new RegExp(`(?:\\?|#|&)${param}=([^&]*)`))
+          return match ? decodeURIComponent(match[1]) : null
+        }
+
+        const code = extractParam(result.url, 'code')
+        const access_token = extractParam(result.url, 'access_token')
+        const refresh_token = extractParam(result.url, 'refresh_token')
+
+        if (code) {
+          const { error: sessionErr } = await supabase.auth.exchangeCodeForSession(code)
+          if (sessionErr) throw sessionErr
+        } else if (access_token && refresh_token) {
+          const { error: sessionErr } = await supabase.auth.setSession({ access_token, refresh_token })
+          if (sessionErr) throw sessionErr
+        } else {
+          throw new Error('No valid authentication tokens found in the redirect URL.')
+        }
+      } else if (result.type === 'cancel' || result.type === 'dismiss') {
+        throw new Error('Sign in was cancelled.')
+      } else {
+        throw new Error(`Unexpected result from browser: ${result.type}`)
       }
     } catch (e: any) {
-      setError(e?.message ?? `${provider === 'google' ? 'Google' : 'Apple'} sign-in failed.`)
+      setError(e?.message ?? 'Google sign-in failed.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleGoogleLogin = () => handleOAuthLogin('google')
-  const handleAppleLogin  = () => handleOAuthLogin('apple')
-
   return (
     <View style={s.root}>
-      {/* Back button */}
-      <Pressable onPress={() => router.back()} style={[s.backBtn, { top: insets.top + 14 }]} hitSlop={14}>
+      <Pressable 
+        onPress={() => router.canGoBack() ? router.back() : router.replace('/')} 
+        style={[s.backBtn, { top: insets.top + 14 }]} 
+        hitSlop={14}
+      >
         <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.6)" />
       </Pressable>
 
@@ -236,172 +121,98 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={FadeInDown.delay(80).duration(400)} style={s.content}>
-            {/* App badge */}
             <View style={s.appBadge}>
               <View style={s.appBadgeDot} />
               <Text style={s.appBadgeText}>{APP_NAME}</Text>
             </View>
 
-            {/* Heading */}
-            {step === 'email' ? (
-              <View style={s.titleBlock}>
-                <Text style={s.titleBold}>Welcome back</Text>
-                <Text style={s.sub}>Enter your email — we'll send a one-time code.</Text>
+            <View style={s.titleBlock}>
+              <Text style={s.titleBold}>Welcome back</Text>
+              <Text style={s.sub}>Enter your email and password to sign in.</Text>
+            </View>
+
+            <View style={s.stepWrap}>
+              <View style={s.fieldGroup}>
+                <Text style={s.label}>EMAIL ADDRESS</Text>
+                <RNTextInput
+                  value={email}
+                  onChangeText={(v) => { setEmail(v); setError(null) }}
+                  placeholder="you@example.com"
+                  placeholderTextColor="rgba(255,255,255,0.18)"
+                  style={[s.input, error ? s.inputErr : null]}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                />
               </View>
-            ) : (
-              <View style={s.titleBlock}>
-                <Text style={s.titleBold}>Check your inbox</Text>
-                <View style={s.emailPill}>
-                  <Text style={s.emailPillText} numberOfLines={1}>
-                    {normalizeEmail(email)}
-                  </Text>
-                </View>
-                <Text style={s.sub}>Enter the 6-digit code we sent. Check spam if needed.</Text>
+              
+              <View style={s.fieldGroup}>
+                <Text style={s.label}>PASSWORD</Text>
+                <RNTextInput
+                  value={password}
+                  onChangeText={(v) => { setPassword(v); setError(null) }}
+                  placeholder="Enter your password"
+                  placeholderTextColor="rgba(255,255,255,0.18)"
+                  style={[s.input, error ? s.inputErr : null]}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={handleEmailLogin}
+                />
               </View>
-            )}
 
-            {/* ── Email step ── */}
-            {step === 'email' && (
-              <View style={s.stepWrap}>
-                <View style={s.fieldGroup}>
-                  <Text style={s.label}>EMAIL ADDRESS</Text>
-                  <RNTextInput
-                    ref={emailRef}
-                    value={email}
-                    onChangeText={(v) => { setEmail(v); setError(null) }}
-                    placeholder="you@example.com"
-                    placeholderTextColor="rgba(255,255,255,0.18)"
-                    style={[s.input, error ? s.inputErr : null]}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="done"
-                    onSubmitEditing={handleSendOtp}
-                    autoFocus
-                  />
-                </View>
+              {error ? <ErrorBanner msg={error} /> : null}
 
-                {error ? <ErrorBanner msg={error} /> : null}
-
-                <Pressable
-                  onPress={handleSendOtp}
-                  disabled={loading || !email.trim()}
-                  style={({ pressed }) => ({
-                    opacity: (loading || !email.trim()) ? 0.4 : pressed ? 0.85 : 1,
-                    borderRadius: 14, overflow: 'hidden',
-                  })}
+              <Pressable
+                onPress={handleEmailLogin}
+                disabled={loading || !email.trim() || !password.trim()}
+                style={({ pressed }) => ({
+                  opacity: (loading || !email.trim() || !password.trim()) ? 0.4 : pressed ? 0.85 : 1,
+                  borderRadius: 14, overflow: 'hidden',
+                  marginTop: 8
+                })}
+              >
+                <LinearGradient
+                  colors={[ACCENT, adjustBrightness(ACCENT, -25)]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={s.btn}
                 >
-                  <LinearGradient
-                    colors={[ACCENT, adjustBrightness(ACCENT, -25)]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={s.btn}
-                  >
-                    {loading
-                      ? <ActivityIndicator size="small" color="#fff" />
-                      : <Text style={s.btnText}>Continue</Text>
-                    }
-                  </LinearGradient>
-                </Pressable>
+                  {loading
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Text style={s.btnText}>Sign in</Text>
+                  }
+                </LinearGradient>
+              </Pressable>
 
-                {/* ─── Social logins ────────────────────── */}
-                <View style={s.dividerRow}>
-                  <View style={s.dividerLine} />
-                  <Text style={s.dividerText}>or continue with</Text>
-                  <View style={s.dividerLine} />
-                </View>
-
-                <View style={s.socialRow}>
-                  {/* Google */}
-                  <Pressable
-                    onPress={handleGoogleLogin}
-                    style={({ pressed }) => [s.socialBtn, pressed && { opacity: 0.75 }]}
-                  >
-                    <View style={s.socialIcon}>
-                      <Text style={{ fontSize: 15, fontWeight: '700' }}>G</Text>
-                    </View>
-                    <Text style={s.socialBtnText}>Google</Text>
-                  </Pressable>
-
-                  {/* Apple */}
-                  <Pressable
-                    onPress={handleAppleLogin}
-                    style={({ pressed }) => [s.socialBtn, pressed && { opacity: 0.75 }]}
-                  >
-                    <Ionicons name="logo-apple" size={17} color="#fff" />
-                    <Text style={s.socialBtnText}>Apple</Text>
-                  </Pressable>
-                </View>
+              <View style={s.dividerRow}>
+                <View style={s.dividerLine} />
+                <Text style={s.dividerText}>or continue with</Text>
+                <View style={s.dividerLine} />
               </View>
-            )}
 
-            {/* ── OTP step ── */}
-            {step === 'otp' && (
-              <View style={s.stepWrap}>
-                <View style={s.otpRow}>
-                  {otp.map((digit, i) => (
-                    <RNTextInput
-                      key={i}
-                      ref={(r) => { otpRefs.current[i] = r }}
-                      value={digit}
-                      onChangeText={(v) => handleOtpChange(v, i)}
-                      onKeyPress={(e) => handleOtpKeyPress(e, i)}
-                      style={[s.otpBox, digit ? [s.otpBoxOn, { borderColor: ACCENT, backgroundColor: ACCENT_DIM }] : null]}
-                      keyboardType="number-pad"
-                      maxLength={1}
-                      selectTextOnFocus
-                      caretHidden
-                      editable={!loading}
-                    />
-                  ))}
+              <Pressable
+                onPress={handleGoogleLogin}
+                style={({ pressed }) => [s.socialBtn, pressed && { opacity: 0.75 }]}
+              >
+                <View style={s.socialIcon}>
+                  <Text style={{ fontSize: 15, fontWeight: '700' }}>G</Text>
                 </View>
+                <Text style={s.socialBtnText}>Continue with Google</Text>
+              </Pressable>
+            </View>
 
-                {error ? <ErrorBanner msg={error} /> : null}
+            <Pressable 
+              onPress={() => router.replace('/(auth)/signup')}
+              style={{ alignItems: 'center', marginTop: 16 }}
+              hitSlop={8}
+            >
+              <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+                Don't have an account? <Text style={{ color: ACCENT, fontWeight: '600' }}>Sign up</Text>
+              </Text>
+            </Pressable>
 
-                {lockoutEnd ? (
-                  <Animated.View entering={FadeIn.duration(180)} style={s.lockoutBox}>
-                    <Text style={s.lockoutText}>
-                      Locked · {Math.floor(lockoutLeft / 60)}:{String(lockoutLeft % 60).padStart(2, '0')} remaining
-                    </Text>
-                  </Animated.View>
-                ) : null}
-
-                <Pressable
-                  onPress={() => handleVerifyOtp(otp.join(''))}
-                  disabled={loading || otp.includes('') || !!lockoutEnd}
-                  style={({ pressed }) => ({
-                    opacity: (loading || otp.includes('') || !!lockoutEnd) ? 0.4 : pressed ? 0.85 : 1,
-                    borderRadius: 14, overflow: 'hidden',
-                  })}
-                >
-                  <LinearGradient
-                    colors={[ACCENT, adjustBrightness(ACCENT, -25)]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={s.btn}
-                  >
-                    {loading
-                      ? <ActivityIndicator size="small" color="#fff" />
-                      : <Text style={s.btnText}>Verify Code</Text>
-                    }
-                  </LinearGradient>
-                </Pressable>
-
-                <View style={s.otpMeta}>
-                  <Pressable onPress={handleResend} disabled={cooldown > 0} hitSlop={10}>
-                    <Text style={[s.resendText, cooldown > 0 && { color: 'rgba(255,255,255,0.22)' }]}>
-                      {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
-                    </Text>
-                  </Pressable>
-                  <Text style={{ color: 'rgba(255,255,255,0.2)' }}>·</Text>
-                  <Pressable onPress={goBack} hitSlop={10}>
-                    <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>Change email</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
-
-
-
-            {/* Legal */}
             <View style={s.legalRow}>
               <Pressable onPress={() => router.push('/privacy')} hitSlop={8}>
                 <Text style={s.legalLink}>Privacy Policy</Text>
@@ -435,7 +246,6 @@ const s = StyleSheet.create({
   form: { flexGrow: 1, paddingHorizontal: 24 },
   content: { flex: 1, gap: 0 },
 
-  // App badge
   appBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -456,22 +266,12 @@ const s = StyleSheet.create({
     fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.5)', letterSpacing: 0.2,
   },
 
-  // Title
   titleBlock: { gap: 10, marginBottom: 28 },
   titleBold: { fontSize: 30, fontWeight: '800', color: '#fff', letterSpacing: -0.8, lineHeight: 36 },
   sub: { fontSize: 14, color: 'rgba(255,255,255,0.40)', lineHeight: 20 },
 
-  emailPill: {
-    alignSelf: 'flex-start', borderWidth: 1, borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 5,
-    backgroundColor: ACCENT_DIM, borderColor: ACCENT_BORDER,
-  },
-  emailPillText: { fontSize: 13, fontWeight: '500', color: ACCENT },
-
-  // Steps wrapper
   stepWrap: { gap: 16 },
 
-  // Fields
   fieldGroup: { gap: 8 },
   label: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' },
   input: {
@@ -482,17 +282,14 @@ const s = StyleSheet.create({
   },
   inputErr: { borderColor: `${ERROR}66` },
 
-  // Buttons
   btn: { height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
-  // Social buttons
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: BORDER },
   dividerText: { color: 'rgba(255,255,255,0.25)', fontSize: 12 },
-  socialRow: { flexDirection: 'row', gap: 12 },
   socialBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     height: 50, backgroundColor: SURFACE, borderRadius: 14,
     borderWidth: 1, borderColor: BORDER,
   },
@@ -502,35 +299,8 @@ const s = StyleSheet.create({
   },
   socialBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
-  // Error
   errorBox: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10 },
 
-  // Lockout
-  lockoutBox: {
-    backgroundColor: 'rgba(251,191,36,0.08)', borderRadius: 10,
-    borderWidth: 1, borderColor: 'rgba(251,191,36,0.2)',
-    paddingHorizontal: 12, paddingVertical: 10, alignItems: 'center',
-  },
-  lockoutText: { color: '#fbbf24', fontSize: 13, fontWeight: '600' },
-
-  // OTP
-  otpRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  otpBox: {
-    flex: 1,
-    height: 56, backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1, borderColor: BORDER, borderRadius: 12,
-    color: '#fff', fontSize: 22, textAlign: 'center',
-    textAlignVertical: 'center', paddingVertical: 0, paddingHorizontal: 0,
-    includeFontPadding: false,
-    fontFamily: Fonts.regular,
-  },
-  otpBoxOn: { color: ACCENT },
-  otpMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  resendText: { color: ACCENT, fontSize: 13, fontWeight: '500' },
-
-
-
-  // Legal
   legalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 'auto', paddingTop: 24 },
   legalLink: { fontSize: 11, color: 'rgba(255,255,255,0.3)', textDecorationLine: 'underline' },
 })

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,14 +9,33 @@ import { Card } from '@/components/ui/Card'
 import { GoldButton, GhostButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { useMember } from '@/hooks/useMembers'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
+import { ensureConversation } from '@/hooks/useConversation'
 
 export default function MemberDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
-  const { data: member } = useMember(id)
+  const { data: member, isLoading, isError, error, refetch } = useMember(id)
 
-  if (!member) return <View style={[s.root, { paddingTop: insets.top }]} />
+  if (isLoading || !member) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top + 12 }]}>
+        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={12}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </Pressable>
+        {isError ? (
+          <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
+        ) : (
+          <View style={{ paddingHorizontal: 24, gap: 12, marginTop: 16 }}>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        )}
+      </View>
+    )
+  }
 
   return (
     <ScrollView style={s.root} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }}>
@@ -49,7 +68,14 @@ export default function MemberDetail() {
       <View style={s.actions}>
         <GoldButton
           title="Send Message"
-          onPress={() => router.push(`/messages/${member.id}`)}
+          onPress={async () => {
+            try {
+              const conversationId = await ensureConversation(member.id)
+              router.push(`/messages/${conversationId}`)
+            } catch (err) {
+              console.warn('Failed to open conversation:', err)
+            }
+          }}
           fullWidth
         />
       </View>

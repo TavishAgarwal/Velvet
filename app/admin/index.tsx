@@ -10,6 +10,7 @@ import { GoldDivider } from '@/components/ui/GoldDivider'
 import { ACCENT, BG_BASE, ACCENT_DIM } from '@/lib/theme'
 import { useAdminStats } from '@/hooks/useAdminStats'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminDashboard() {
   const insets = useSafeAreaInsets()
@@ -71,6 +72,29 @@ export default function AdminDashboard() {
             <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.3)" />
           </Pressable>
         ))}
+
+        <GoldDivider style={{ marginVertical: 12 }} />
+
+        <Pressable
+          onPress={() => router.replace('/(tabs)')}
+          style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }]}
+        >
+          <View style={s.menuIcon}>
+            <Ionicons name="layers-outline" size={20} color={ACCENT} />
+          </View>
+          <Text variant="body" color="primary" style={{ flex: 1, fontWeight: '500' }}>Switch to Member View</Text>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.3)" />
+        </Pressable>
+
+        <Pressable
+          onPress={async () => { await supabase.auth.signOut() }}
+          style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }, { borderColor: '#401111', backgroundColor: '#200A0A' }]}
+        >
+          <View style={[s.menuIcon, { backgroundColor: '#401111' }]}>
+            <Ionicons name="log-out-outline" size={20} color="#ff4444" />
+          </View>
+          <Text variant="body" style={{ flex: 1, fontWeight: '500', color: '#ff4444' }}>Log Out</Text>
+        </Pressable>
       </View>
     </ScrollView>
   )

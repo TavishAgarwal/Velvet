@@ -7,6 +7,7 @@ import { GoldButton, GhostButton } from '@/components/ui/Button'
 import { TextInputField } from '@/components/ui/TextInputField'
 import { StepProgress } from '@/components/application/StepProgress'
 import { useApplication } from '@/contexts/ApplicationContext'
+import { supabase } from '@/lib/supabase'
 import { BG_BASE } from '@/lib/theme'
 import { isValidEmail } from '@/lib/utils'
 
@@ -16,7 +17,16 @@ export default function ApplyStep1() {
   const [name, setName] = useState(data.full_name)
   const [email, setEmail] = useState(data.email)
   const [city, setCity] = useState(data.city)
+  const [country, setCountry] = useState(data.country)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    await supabase.auth.signOut()
+    setSigningOut(false)
+    router.replace('/')
+  }
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -24,13 +34,14 @@ export default function ApplyStep1() {
     if (!email.trim()) e.email = 'Required'
     else if (!isValidEmail(email)) e.email = 'Invalid email'
     if (!city.trim()) e.city = 'Required'
+    if (!country.trim()) e.country = 'Required'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const handleNext = () => {
     if (!validate()) return
-    dispatch({ type: 'SET_STEP_1', payload: { full_name: name.trim(), email: email.trim(), city: city.trim() } })
+    dispatch({ type: 'SET_STEP_1', payload: { full_name: name.trim(), email: email.trim(), city: city.trim(), country: country.trim() } })
     router.push('/apply/step2')
   }
 
@@ -73,12 +84,20 @@ export default function ApplyStep1() {
             error={errors.city}
             style={{ marginTop: 16 }}
           />
+          <TextInputField
+            label="COUNTRY"
+            placeholder="Which country do you live in?"
+            value={country}
+            onChangeText={setCountry}
+            error={errors.country}
+            style={{ marginTop: 16 }}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
         <GoldButton title="Continue" onPress={handleNext} fullWidth />
-        <GhostButton title="Back" onPress={() => router.back()} fullWidth />
+        <GhostButton title="Sign Out" onPress={handleSignOut} loading={signingOut} fullWidth />
       </View>
     </View>
   )

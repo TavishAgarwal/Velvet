@@ -15,23 +15,39 @@ export default function ApplyStep4() {
   const { data, dispatch } = useApplication()
   const [instagram, setInstagram] = useState(data.instagram_handle)
   const [referral, setReferral] = useState(data.referral_code)
+  const [howHeard, setHowHeard] = useState(data.how_heard)
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async () => {
     dispatch({
       type: 'SET_STEP_4',
-      payload: { instagram_handle: instagram.trim(), referral_code: referral.trim().toUpperCase() },
+      payload: { 
+        instagram_handle: instagram.trim(), 
+        referral_code: referral.trim().toUpperCase(),
+        how_heard: howHeard.trim()
+      },
     })
 
     setSubmitting(true)
     try {
       if (isSupabaseEnabled) {
-        const { error } = await supabase.from('applications').insert({
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user?.id) throw new Error('Not authenticated')
+
+        const payload = {
           ...data,
+          user_id: session.user.id,
           instagram_handle: instagram.trim() || null,
           referral_code: referral.trim().toUpperCase() || null,
           status: 'pending',
-        })
+        } as any;
+        
+        // Remove columns not yet in the remote database schema
+        delete payload.country;
+        delete payload.what_you_bring;
+        delete payload.how_heard;
+
+        const { error } = await supabase.from('applications').insert(payload)
         if (error) throw error
       }
       router.replace('/apply/submitted')
@@ -69,12 +85,19 @@ export default function ApplyStep4() {
             style={{ marginTop: 16 }}
             hint="If someone invited you, enter their code here."
           />
+          <TextInputField
+            label="HOW DID YOU HEAR ABOUT US?"
+            placeholder="A friend, Instagram, etc. (optional)"
+            value={howHeard}
+            onChangeText={setHowHeard}
+            style={{ marginTop: 16 }}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
         <GoldButton title="Submit Application" onPress={handleSubmit} loading={submitting} fullWidth />
-        <GhostButton title="Back" onPress={() => router.back()} fullWidth />
+        <GhostButton title="Back" onPress={() => router.canGoBack() ? router.back() : router.replace('/')} fullWidth />
       </View>
     </View>
   )

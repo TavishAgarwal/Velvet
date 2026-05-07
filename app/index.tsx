@@ -99,7 +99,7 @@ export default function LandingScreen() {
                         <Text variant="h3" color="primary" style={s.headerAppName}>{APP_NAME}</Text>
                     </View>
                     <Pressable
-                        onPress={() => router.push('/(auth)/login')}
+                        onPress={() => router.push('/(auth)/signup')}
                         style={({ pressed }) => [s.headerCta, pressed && { opacity: 0.82, transform: [{ scale: 0.97 }] }]}
                     >
                         <LinearGradient

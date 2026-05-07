@@ -9,6 +9,7 @@ import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
 import { formatRelativeTime } from '@/lib/utils'
 import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications'
+import { ErrorState } from '@/components/ui/ErrorState'
 import type { Notification } from '@/types'
 
 const ICON_MAP: Record<string, string> = {
@@ -22,7 +23,7 @@ const ICON_MAP: Record<string, string> = {
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
-  const { data: notifications, isLoading } = useNotifications()
+  const { data: notifications, isLoading, isError, error, refetch } = useNotifications()
   const markAsRead = useMarkNotificationRead()
 
   const handlePress = (item: Notification) => {
@@ -68,6 +69,8 @@ export default function NotificationsScreen() {
         <View style={s.list}>
           {[1,2,3,4].map(i => <SkeletonCard key={i} />)}
         </View>
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
       <FlatList
         data={notifications}

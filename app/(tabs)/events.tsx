@@ -8,13 +8,14 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useEvents } from '@/hooks/useEvents'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
 import { formatEventDate, formatDateBadge } from '@/lib/utils'
 import type { Event } from '@/types'
 
 export default function EventsScreen() {
   const insets = useSafeAreaInsets()
-  const { data: events, isLoading } = useEvents()
+  const { data: events, isLoading, isError, error, refetch } = useEvents()
 
   const renderEvent = ({ item }: { item: Event }) => {
     const badge = formatDateBadge(item.starts_at)
@@ -53,6 +54,8 @@ export default function EventsScreen() {
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
           {[1,2,3].map(i => <SkeletonCard key={i} />)}
         </View>
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
       <FlatList
         data={events}

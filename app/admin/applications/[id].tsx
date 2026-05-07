@@ -11,6 +11,8 @@ import { GoldButton, GhostButton, Button } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { TextInputField } from '@/components/ui/TextInputField'
 import { useApplication } from '@/hooks/useApplications'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, BG_BASE, ACCENT_DIM } from '@/lib/theme'
 import { formatRelativeTime } from '@/lib/utils'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
@@ -19,7 +21,7 @@ import { queryClient } from '@/lib/queryClient'
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
-  const { data: app } = useApplication(id)
+  const { data: app, isLoading, isError, error, refetch } = useApplication(id)
   const [notes, setNotes] = useState('')
   const [acting, setActing] = useState(false)
 
@@ -46,7 +48,24 @@ export default function ApplicationDetail() {
     }
   }
 
-  if (!app) return <View style={[s.root, { paddingTop: insets.top }]} />
+  if (isLoading || !app) {
+    return (
+      <ScrollView style={s.root} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }}>
+        <View style={s.header}>
+          <Ionicons name="arrow-back" size={24} color="#fff" onPress={() => router.back()} />
+        </View>
+        {isError ? (
+          <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
+        ) : (
+          <View style={{ paddingHorizontal: 24, gap: 12 }}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        )}
+      </ScrollView>
+    )
+  }
 
   return (
     <ScrollView style={s.root} contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }}>

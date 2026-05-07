@@ -71,7 +71,7 @@ export default function ApplyStep2() {
 
       <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
         <GoldButton title="Continue" onPress={handleNext} fullWidth />
-        <GhostButton title="Back" onPress={() => router.back()} fullWidth />
+        <GhostButton title="Back" onPress={() => router.canGoBack() ? router.back() : router.replace('/')} fullWidth />
       </View>
     </View>
   )

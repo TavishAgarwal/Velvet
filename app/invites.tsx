@@ -11,11 +11,12 @@ import { GoldDivider } from '@/components/ui/GoldDivider'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
 import { useInvites } from '@/hooks/useInvites'
+import { ErrorState } from '@/components/ui/ErrorState'
 import type { Invite } from '@/types'
 
 export default function InvitesScreen() {
   const insets = useSafeAreaInsets()
-  const { data: invites = [], isLoading } = useInvites()
+  const { data: invites = [], isLoading, isError, error, refetch } = useInvites()
   const unusedInvites = invites.filter(i => !i.used_by)
   const usedInvites = invites.filter(i => !!i.used_by)
 
@@ -50,48 +51,49 @@ export default function InvitesScreen() {
           <SkeletonCard />
           <SkeletonCard />
         </View>
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
-      <>
-      {/* Unused invites */}
-      {unusedInvites.length > 0 && (
-        <View style={s.section}>
-          <Text variant="label" uppercase color="accent" style={{ marginBottom: 10 }}>Available</Text>
-          {unusedInvites.map(invite => (
-            <Card key={invite.id} style={{ marginBottom: 10 }}>
-              <View style={s.codeRow}>
-                <View style={s.codeBadge}>
-                  <Text variant="body" color="accent" style={{ fontWeight: '700', letterSpacing: 2 }}>
-                    {invite.code}
-                  </Text>
-                </View>
-                <Pressable onPress={() => handleCopy(invite.code)} hitSlop={8}>
-                  <Ionicons name="copy-outline" size={20} color={TEXT_TERTIARY} />
-                </Pressable>
-                <Pressable onPress={() => handleShare(invite.code)} hitSlop={8}>
-                  <Ionicons name="share-outline" size={20} color={TEXT_TERTIARY} />
-                </Pressable>
-              </View>
-            </Card>
-          ))}
-        </View>
-      )}
-
-      <GoldDivider />
-
-      {/* Used invites */}
-      {usedInvites.length > 0 && (
-        <View style={s.section}>
-          <Text variant="label" uppercase color="secondary" style={{ marginBottom: 10 }}>Used</Text>
-          {usedInvites.map(invite => (
-            <View key={invite.id} style={s.usedRow}>
-              <Text variant="bodySm" color="tertiary" style={{ letterSpacing: 1 }}>{invite.code}</Text>
-              <Text variant="caption" color="tertiary">Used</Text>
+        <>
+          {/* Unused invites */}
+          {unusedInvites.length > 0 && (
+            <View style={s.section}>
+              <Text variant="label" uppercase color="accent" style={{ marginBottom: 10 }}>Available</Text>
+              {unusedInvites.map(invite => (
+                <Card key={invite.id} style={{ marginBottom: 10 }}>
+                  <View style={s.codeRow}>
+                    <View style={s.codeBadge}>
+                      <Text variant="body" color="accent" style={{ fontWeight: '700', letterSpacing: 2 }}>
+                        {invite.code}
+                      </Text>
+                    </View>
+                    <Pressable onPress={() => handleCopy(invite.code)} hitSlop={8}>
+                      <Ionicons name="copy-outline" size={20} color={TEXT_TERTIARY} />
+                    </Pressable>
+                    <Pressable onPress={() => handleShare(invite.code)} hitSlop={8}>
+                      <Ionicons name="share-outline" size={20} color={TEXT_TERTIARY} />
+                    </Pressable>
+                  </View>
+                </Card>
+              ))}
             </View>
-          ))}
-        </View>
-      )}
-      )}
-      </>
+          )}
+
+          <GoldDivider />
+
+          {/* Used invites */}
+          {usedInvites.length > 0 && (
+            <View style={s.section}>
+              <Text variant="label" uppercase color="secondary" style={{ marginBottom: 10 }}>Used</Text>
+              {usedInvites.map(invite => (
+                <View key={invite.id} style={s.usedRow}>
+                  <Text variant="bodySm" color="tertiary" style={{ letterSpacing: 1 }}>{invite.code}</Text>
+                  <Text variant="caption" color="tertiary">Used</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </>
       )}
     </ScrollView>
   )

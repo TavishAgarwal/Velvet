@@ -8,13 +8,14 @@ import { Avatar } from '@/components/ui/Avatar'
 import { TextInputField } from '@/components/ui/TextInputField'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useMembers } from '@/hooks/useMembers'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, BG_BASE, BORDER_DEFAULT } from '@/lib/theme'
 import type { Profile } from '@/types'
 
 export default function MembersScreen() {
   const insets = useSafeAreaInsets()
   const [search, setSearch] = useState('')
-  const { data: members, isLoading } = useMembers(search || undefined)
+  const { data: members, isLoading, isError, error, refetch } = useMembers(search || undefined)
 
   const renderMember = ({ item }: { item: Profile }) => (
     <Pressable
@@ -51,6 +52,8 @@ export default function MembersScreen() {
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
           {[1,2,3,4].map(i => <SkeletonCard key={i} />)}
         </View>
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
         <FlatList
           data={members}

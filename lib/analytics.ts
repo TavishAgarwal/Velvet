@@ -30,12 +30,6 @@ type EventName =
   // Onboarding
   | 'onboarding_started'
   | 'onboarding_completed'
-  // Subscription
-  | 'upgrade_page_viewed'
-  | 'upgrade_cta_tapped'
-  | 'purchase_success'
-  | 'restore_purchases_tapped'
-  | 'redeem_code_tapped'
   // Navigation
   | 'screen_viewed'
   // Profile

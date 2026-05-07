@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
+import { getMockMessages } from '@/lib/mockData'
 import type { Message } from '@/types'
 
 export function useMessages(conversationId: string) {
@@ -9,15 +10,22 @@ export function useMessages(conversationId: string) {
   const query = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async (): Promise<Message[]> => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
-      if (error) throw error
-      return data as Message[]
+      if (!isSupabaseEnabled) return getMockMessages(conversationId)
+
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true })
+        if (error) throw error
+        if (!data || data.length === 0) return getMockMessages(conversationId)
+        return data as Message[]
+      } catch {
+        return getMockMessages(conversationId)
+      }
     },
-    enabled: isSupabaseEnabled && !!conversationId,
+    enabled: !!conversationId,
   })
 
   // Subscribe to real-time inserts on this conversation

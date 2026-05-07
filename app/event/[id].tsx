@@ -10,18 +10,37 @@ import { GoldButton, GhostButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { useEvent } from '@/hooks/useEvents'
 import { useEventRsvp, useRsvpActions } from '@/hooks/useEventRsvp'
+import { SkeletonCard } from '@/components/ui/SkeletonLoader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, ACCENT_DIM, BG_BASE, TEXT_TERTIARY, ERROR } from '@/lib/theme'
 import { formatEventDate } from '@/lib/utils'
 
 export default function EventDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
-  const { data: event } = useEvent(id)
+  const { data: event, isLoading, isError, error, refetch } = useEvent(id)
   const { data: rsvpData } = useEventRsvp(id)
   const { rsvp, cancelRsvp } = useRsvpActions(id)
   const rsvpd = rsvpData?.status === 'going'
 
-  if (!event) return <View style={[s.root, { paddingTop: insets.top }]} />
+  if (isLoading || !event) {
+    return (
+      <View style={[s.root, { paddingTop: insets.top + 24 }]}>
+        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={12}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </Pressable>
+        {isError ? (
+          <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
+        ) : (
+          <View style={{ paddingHorizontal: 24, gap: 12 }}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        )}
+      </View>
+    )
+  }
 
   const spotsLeft = event.capacity ? event.capacity - event.rsvp_count : null
 

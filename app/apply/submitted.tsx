@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,9 +7,40 @@ import { Text } from '@/components/ui/Text'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
 import { APP_NAME } from '@/lib/constants'
+import { GhostButton } from '@/components/ui/Button'
+import { supabase, isSupabaseEnabled } from '@/lib/supabase'
+import { appEvents } from '@/lib/events'
 
 export default function SubmittedScreen() {
   const insets = useSafeAreaInsets()
+  const [checking, setChecking] = useState(false)
+
+  // Polling mechanism
+  useEffect(() => {
+    if (!isSupabaseEnabled) return
+
+    const interval = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) return
+        
+        const { data: appData } = await supabase
+          .from('applications')
+          .select('status')
+          .eq('user_id', session.user.id)
+          .single()
+        
+        if (appData?.status && appData.status !== 'pending') {
+          appEvents.emit('applicationStatusChanged')
+        }
+      } catch (err) {
+        // Silent catch for background polling
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [])
+
 
   return (
     <View style={[s.root, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 }]}>
@@ -42,6 +73,17 @@ export default function SubmittedScreen() {
           <Ionicons name="shield-checkmark-outline" size={18} color={ACCENT} />
           <Text variant="bodySm" color="secondary">Referral codes improve your chances</Text>
         </View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(700).springify()} style={{ width: '100%', marginTop: 'auto' }}>
+        <GhostButton 
+          title="Sign Out" 
+          onPress={async () => {
+            await supabase.auth.signOut()
+            router.replace('/')
+          }} 
+          fullWidth 
+        />
       </Animated.View>
     </View>
   )

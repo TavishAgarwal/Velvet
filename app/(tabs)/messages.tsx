@@ -6,13 +6,14 @@ import { Text } from '@/components/ui/Text'
 import { Avatar } from '@/components/ui/Avatar'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useConversations } from '@/hooks/useConversations'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { BG_BASE, BORDER_DEFAULT, ACCENT } from '@/lib/theme'
 import { formatRelativeTime, truncate } from '@/lib/utils'
 import type { Conversation } from '@/types'
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets()
-  const { data: conversations, isLoading } = useConversations()
+  const { data: conversations, isLoading, isError, error, refetch } = useConversations()
 
   const renderConversation = ({ item }: { item: Conversation }) => (
     <Pressable
@@ -62,6 +63,8 @@ export default function MessagesScreen() {
         <View style={{ paddingHorizontal: 16, gap: 10, paddingTop: 8 }}>
           {[1,2,3,4].map(i => <SkeletonCard key={i} />)}
         </View>
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
       <FlatList
         data={conversations}

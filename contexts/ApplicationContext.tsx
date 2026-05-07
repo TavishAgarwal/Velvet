@@ -5,22 +5,25 @@ interface ApplicationData {
   full_name: string
   email: string
   city: string
+  country: string
   // Step 2
   profession: string
   company: string
   linkedin_url: string
   // Step 3
   why_join: string
+  what_you_bring: string
   // Step 4
   instagram_handle: string
   referral_code: string
+  how_heard: string
 }
 
 type Action =
-  | { type: 'SET_STEP_1'; payload: Pick<ApplicationData, 'full_name' | 'email' | 'city'> }
+  | { type: 'SET_STEP_1'; payload: Pick<ApplicationData, 'full_name' | 'email' | 'city' | 'country'> }
   | { type: 'SET_STEP_2'; payload: Pick<ApplicationData, 'profession' | 'company' | 'linkedin_url'> }
-  | { type: 'SET_STEP_3'; payload: Pick<ApplicationData, 'why_join'> }
-  | { type: 'SET_STEP_4'; payload: Pick<ApplicationData, 'instagram_handle' | 'referral_code'> }
+  | { type: 'SET_STEP_3'; payload: Pick<ApplicationData, 'why_join' | 'what_you_bring'> }
+  | { type: 'SET_STEP_4'; payload: Pick<ApplicationData, 'instagram_handle' | 'referral_code' | 'how_heard'> }
   | { type: 'RESET' }
 
 interface ApplicationContextType {
@@ -30,10 +33,10 @@ interface ApplicationContextType {
 }
 
 const initialData: ApplicationData = {
-  full_name: '', email: '', city: '',
+  full_name: '', email: '', city: '', country: '',
   profession: '', company: '', linkedin_url: '',
-  why_join: '',
-  instagram_handle: '', referral_code: '',
+  why_join: '', what_you_bring: '',
+  instagram_handle: '', referral_code: '', how_heard: '',
 }
 
 function reducer(state: ApplicationData, action: Action): ApplicationData {
@@ -61,7 +64,7 @@ export function ApplicationProvider({ children }: { children: ReactNode }) {
   const [data, dispatch] = useReducer(reducer, initialData)
 
   const isComplete = Boolean(
-    data.full_name && data.email && data.city &&
+    data.full_name && data.email && data.city && data.country &&
     data.profession && data.why_join
   )
 

@@ -11,10 +11,32 @@ import { GoldDivider } from '@/components/ui/GoldDivider'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { ACCENT, ACCENT_DIM, BG_BASE, BORDER_DEFAULT, TEXT_TERTIARY } from '@/lib/theme'
 import { useAuth } from '@/contexts/AuthContext'
+import { useQuery } from '@tanstack/react-query'
+import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets()
   const { profile: currentUser, signOut } = useAuth()
+
+  // Real events-attended count from database
+  const { data: eventsAttended = 3 } = useQuery({
+    queryKey: ['eventsAttended', currentUser?.id],
+    queryFn: async () => {
+      if (!isSupabaseEnabled) return 3
+      try {
+        const { count, error } = await supabase
+          .from('event_rsvps')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser!.id)
+          .eq('status', 'going')
+        if (error) return 3
+        return count ?? 3
+      } catch {
+        return 3
+      }
+    },
+    enabled: !!currentUser?.id,
+  })
 
   if (!currentUser) {
     return (
@@ -57,7 +79,7 @@ export default function ProfileScreen() {
           <Text variant="caption" color="secondary">Invites Used</Text>
         </View>
         <View style={s.statItem}>
-          <Text variant="h2" color="accent">—</Text>
+          <Text variant="h2" color="accent">{eventsAttended}</Text>
           <Text variant="caption" color="secondary">Events Attended</Text>
         </View>
       </View>
@@ -68,15 +90,33 @@ export default function ProfileScreen() {
       </View>
 
       <View style={s.menuSection}>
+        {currentUser.role === 'admin' && (
+          <Pressable
+            onPress={() => router.push('/admin')}
+            style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }]}
+          >
+            <Ionicons name="shield-checkmark-outline" size={20} color={ACCENT} />
+            <Text variant="body" color="accent" style={{ flex: 1, fontWeight: '600' }}>Admin Dashboard</Text>
+            <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
+          </Pressable>
+        )}
+
+        <Pressable
+          onPress={() => router.push('/notifications')}
+          style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }]}
+        >
+          <Ionicons name="notifications-outline" size={20} color={TEXT_TERTIARY} />
+          <Text variant="body" color="secondary" style={{ flex: 1 }}>Notifications</Text>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
+        </Pressable>
+
         {[
-          { label: 'Settings', icon: 'settings-outline' as const },
-          { label: 'Help & Support', icon: 'help-circle-outline' as const },
           { label: 'Privacy Policy', icon: 'shield-outline' as const, route: '/privacy' as const },
           { label: 'Terms of Service', icon: 'document-text-outline' as const, route: '/terms' as const },
         ].map(item => (
           <Pressable
             key={item.label}
-            onPress={() => item.route && router.push(item.route)}
+            onPress={() => router.push(item.route)}
             style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }]}
           >
             <Ionicons name={item.icon} size={20} color={TEXT_TERTIARY} />

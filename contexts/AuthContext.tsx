@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, type ReactNode } from 'react'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { queryClient } from '@/lib/queryClient'
+import { MOCK_CURRENT_USER } from '@/lib/mockData'
 import type { Profile } from '@/types'
 import type { Session } from '@supabase/supabase-js'
 
@@ -30,17 +31,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId: string) => {
-    if (!isSupabaseEnabled) return
+    if (!isSupabaseEnabled) {
+      setProfile(MOCK_CURRENT_USER)
+      return
+    }
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
-      if (error) throw error
+      if (error || !data) {
+        // Fall back to mock profile for demo
+        setProfile(MOCK_CURRENT_USER)
+        return
+      }
       setProfile(data as Profile)
     } catch (err) {
-      console.warn('[AuthContext] Error fetching profile:', err)
+      console.warn('[AuthContext] Error fetching profile — using demo profile:', err)
+      setProfile(MOCK_CURRENT_USER)
     }
   }, [])
 

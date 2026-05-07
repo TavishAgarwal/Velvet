@@ -6,12 +6,13 @@ import { Text } from '@/components/ui/Text'
 import { ApplicationRow } from '@/components/admin/ApplicationRow'
 import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useApplications } from '@/hooks/useApplications'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { BG_BASE } from '@/lib/theme'
 import type { Application } from '@/types'
 
 export default function ApplicationQueue() {
   const insets = useSafeAreaInsets()
-  const { data: applications, isLoading } = useApplications('pending')
+  const { data: applications, isLoading, isError, error, refetch } = useApplications('pending')
 
   const renderItem = ({ item }: { item: Application }) => (
     <ApplicationRow
@@ -34,6 +35,8 @@ export default function ApplicationQueue() {
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
           {[1,2,3].map(i => <SkeletonCard key={i} />)}
         </View>
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
         <FlatList
           data={applications}

@@ -26,12 +26,15 @@ export interface Application {
   user_id: string
   email: string
   full_name: string
+  country: string | null
   city: string
   profession: string
   company: string | null
   linkedin_url: string | null
   instagram_handle: string | null
+  what_you_bring: string | null
   why_join: string
+  how_heard: string | null
   referral_code: string | null
   status: 'pending' | 'approved' | 'rejected' | 'waitlisted'
   admin_notes: string | null

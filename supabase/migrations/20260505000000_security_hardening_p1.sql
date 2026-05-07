@@ -15,8 +15,8 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  -- Non-admins cannot change protected fields
-  IF NOT is_admin() THEN
+  -- Non-admins cannot change protected fields, but allow dashboard/service_role bypass
+  IF auth.uid() IS NOT NULL AND NOT is_admin() THEN
     NEW.role                  := OLD.role;
     NEW.plan_type             := OLD.plan_type;
     NEW.invite_count          := OLD.invite_count;

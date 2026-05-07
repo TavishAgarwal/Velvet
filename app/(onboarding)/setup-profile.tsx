@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Pressable, Alert } from 'react-native'
-import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
@@ -10,6 +9,7 @@ import { GoldButton } from '@/components/ui/Button'
 import { GoldDivider } from '@/components/ui/GoldDivider'
 import { ACCENT, BG_BASE, ACCENT_DIM, BORDER_DEFAULT } from '@/lib/theme'
 import { supabase } from '@/lib/supabase'
+import { appEvents } from '@/lib/events'
 
 const INTEREST_OPTIONS = [
   'Art & Design', 'Technology', 'Finance', 'Food & Wine',
@@ -57,15 +57,14 @@ export default function SetupProfileScreen() {
         .eq('id', user.id)
       if (error) throw error
 
-      // Also update auth metadata so _layout.tsx sees onboarding_completed
-      await supabase.auth.updateUser({
-        data: { onboarding_completed: true },
-      })
+      // Signal the root layout that onboarding is done.
+      // The layout guard will detect onboardingCompleted=true and navigate to /(tabs).
+      // We do NOT navigate here — the layout guard owns all routing.
+      appEvents.emit('onboardingCompleted')
 
-      router.replace('/(tabs)')
+      // Keep spinner visible — the layout will redirect away from this screen.
     } catch (err) {
       Alert.alert('Error', 'Could not save your profile. Please try again.')
-    } finally {
       setSaving(false)
     }
   }
