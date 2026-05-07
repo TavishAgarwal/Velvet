@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
-import { router } from 'expo-router'
+import { router, Redirect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
@@ -19,7 +19,7 @@ import { ErrorState } from '@/components/ui/ErrorState'
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
-  const { profile } = useAuth()
+  const { profile, isSigningOut } = useAuth()
   
   const greeting = profile?.display_name 
     ? `${getGreeting()}, ${profile.display_name.split(' ')[0]}`
@@ -29,6 +29,10 @@ export default function HomeScreen() {
   const { data: events, isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents } = useEvents()
   const { data: notifications } = useNotifications()
   const unreadCount = notifications?.filter(n => !n.is_read).length ?? 0
+
+  if (isSigningOut) {
+    return <Redirect href="/" />
+  }
 
   const hasError = membersError || eventsError
   if (hasError) {

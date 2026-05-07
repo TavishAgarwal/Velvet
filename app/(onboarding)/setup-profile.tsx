@@ -58,7 +58,7 @@ export default function SetupProfileScreen() {
       if (error) throw error
 
       // Signal the root layout that onboarding is done.
-      // The layout guard will detect onboardingCompleted=true and navigate to /(tabs).
+      // The layout guard will detect onboardingCompleted=true and navigate to /(tabs)/home.
       // We do NOT navigate here — the layout guard owns all routing.
       appEvents.emit('onboardingCompleted')
 

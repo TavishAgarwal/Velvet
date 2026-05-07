@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, FlatList, StyleSheet, Pressable } from 'react-native'
-import { router } from 'expo-router'
+import { router, Redirect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
@@ -11,11 +11,17 @@ import { useEvents } from '@/hooks/useEvents'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
 import { formatEventDate, formatDateBadge } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Event } from '@/types'
 
 export default function EventsScreen() {
   const insets = useSafeAreaInsets()
+  const { isSigningOut } = useAuth()
   const { data: events, isLoading, isError, error, refetch } = useEvents()
+
+  if (isSigningOut) {
+    return <Redirect href="/" />
+  }
 
   const renderEvent = ({ item }: { item: Event }) => {
     const badge = formatDateBadge(item.starts_at)

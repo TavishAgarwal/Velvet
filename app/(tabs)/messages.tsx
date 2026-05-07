@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, FlatList, StyleSheet, Pressable } from 'react-native'
-import { router } from 'expo-router'
+import { router, Redirect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/Text'
 import { Avatar } from '@/components/ui/Avatar'
@@ -9,13 +9,19 @@ import { useConversations } from '@/hooks/useConversations'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { BG_BASE, BORDER_DEFAULT, ACCENT } from '@/lib/theme'
 import { formatRelativeTime, truncate } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Conversation } from '@/types'
 
 import { Ionicons } from '@expo/vector-icons'
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets()
+  const { isSigningOut } = useAuth()
   const { data: conversations, isLoading, isError, error, refetch } = useConversations()
+
+  if (isSigningOut) {
+    return <Redirect href="/" />
+  }
 
   const renderConversation = ({ item }: { item: Conversation }) => (
     <Pressable

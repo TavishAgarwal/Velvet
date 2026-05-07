@@ -248,8 +248,10 @@ function RootLayout() {
         setUserRole(null)
         setApplicationStatus(null)
         resetIdentity()
-        // Reset the flag so future sign-ins work normally
-        forcedSignOutRef.current = false
+        // Reset the flag after a short delay so any rogue SIGNED_IN events are still ignored
+        setTimeout(() => {
+          forcedSignOutRef.current = false
+        }, 1000)
       }
       if ((event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') && session?.user) {
         const { completed, role, status } = await ensureProfile(session.user.id, session.user.email)
@@ -318,10 +320,23 @@ function RootLayout() {
     return unsub
   }, [])
 
+  // ─── Listen for explicit sign out ───────────────────────────────────────────
+  useEffect(() => {
+    const unsub = appEvents.on('forceSignOut', () => {
+      forcedSignOutRef.current = true
+      setIsAuthed(false)
+      setOnboardingCompleted(null)
+      setUserRole(null)
+      setApplicationStatus(null)
+      resetIdentity()
+    })
+    return unsub
+  }, [])
+
   // ─── Route Guard ────────────────────────────────────────────────────────────
   // When auth state changes, explicitly navigate so Expo Router doesn't get lost
   // when current route unmounts.
-  const segments = useSegments()
+  const segments = useSegments() as string[]
   const router = useRouter()
   const navigationState = useRootNavigationState()
 
@@ -341,9 +356,9 @@ function RootLayout() {
       if (userRole === 'applicant') {
         if (applicationStatus === 'approved') {
           if (onboardingCompleted === false) {
-             if (segments[0] !== '(onboarding)') setTimeout(() => router.replace('/(onboarding)'), 0)
+             if (segments[0] !== '(onboarding)') setTimeout(() => router.replace('/(onboarding)/welcome'), 0)
           } else {
-             if (isAuthFlowRoute) setTimeout(() => router.replace('/(tabs)'), 0)
+             if (isAuthFlowRoute) setTimeout(() => router.replace('/(tabs)/home'), 0)
           }
         } else if (applicationStatus === 'declined') {
           if (segments[0] !== 'apply' || segments[1] !== 'declined') setTimeout(() => router.replace('/apply/declined'), 0)
@@ -367,7 +382,7 @@ function RootLayout() {
           }
         } else {
           if (isAuthFlowRoute) {
-            setTimeout(() => router.replace('/(tabs)'), 0)
+            setTimeout(() => router.replace('/(tabs)/home'), 0)
           }
         }
       }

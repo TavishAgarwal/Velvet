@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { View, FlatList, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
+import { router, Redirect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Pressable } from 'react-native'
 import { Text } from '@/components/ui/Text'
@@ -10,12 +10,18 @@ import { SkeletonCard } from '@/components/ui/SkeletonLoader'
 import { useMembers } from '@/hooks/useMembers'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { ACCENT, BG_BASE, BORDER_DEFAULT } from '@/lib/theme'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Profile } from '@/types'
 
 export default function MembersScreen() {
   const insets = useSafeAreaInsets()
+  const { isSigningOut } = useAuth()
   const [search, setSearch] = useState('')
   const { data: members, isLoading, isError, error, refetch } = useMembers(search || undefined)
+
+  if (isSigningOut) {
+    return <Redirect href="/" />
+  }
 
   const renderMember = ({ item }: { item: Profile }) => (
     <Pressable

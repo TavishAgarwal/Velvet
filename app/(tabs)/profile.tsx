@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native'
-import { router } from 'expo-router'
+import { router, Redirect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Text } from '@/components/ui/Text'
@@ -16,7 +16,7 @@ import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets()
-  const { profile: currentUser, signOut } = useAuth()
+  const { profile: currentUser, signOut, isSigningOut } = useAuth()
 
   // Real events-attended count from database
   const { data: eventsAttended = 3 } = useQuery({
@@ -38,9 +38,14 @@ export default function ProfileScreen() {
     enabled: !!currentUser?.id,
   })
 
+  // Declarative navigation exit hook
+  if (isSigningOut) {
+    return <Redirect href="/" />
+  }
+
   if (!currentUser) {
     return (
-      <View style={[s.root, { paddingTop: insets.top + 16, paddingHorizontal: 16 }]}>
+      <View style={[s.root, { paddingTop: insets.top + 16, paddingHorizontal: 16 }]} >
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />

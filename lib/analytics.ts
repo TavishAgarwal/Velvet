@@ -26,6 +26,8 @@ type EventName =
   | 'login_started'
   | 'otp_sent'
   | 'login_success'
+  | 'signup_started'
+  | 'signup_success'
   | 'logout'
   // Onboarding
   | 'onboarding_started'

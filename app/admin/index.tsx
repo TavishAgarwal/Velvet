@@ -20,7 +20,7 @@ export default function AdminDashboard() {
   // Guard: redirect non-admins away
   useEffect(() => {
     if (profile && profile.role !== 'admin') {
-      router.replace('/(tabs)')
+      router.replace('/(tabs)/home')
     }
   }, [profile])
 
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
         <GoldDivider style={{ marginVertical: 12 }} />
 
         <Pressable
-          onPress={() => router.replace('/(tabs)')}
+          onPress={() => router.replace('/(tabs)/home')}
           style={({ pressed }) => [s.menuRow, pressed && { opacity: 0.7 }]}
         >
           <View style={s.menuIcon}>

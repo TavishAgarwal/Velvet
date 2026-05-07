@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo, useCall
 import { router } from 'expo-router'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { queryClient } from '@/lib/queryClient'
+import { appEvents } from '@/lib/events'
 import { MOCK_CURRENT_USER } from '@/lib/mockData'
 import type { Profile } from '@/types'
 import type { Session } from '@supabase/supabase-js'
@@ -10,7 +11,8 @@ interface AuthState {
   session: Session | null
   profile: Profile | null
   loading: boolean
-  signOut: () => Promise<void>
+  isSigningOut: boolean
+  signOut: () => Promise<void> | void
   refreshProfile: () => Promise<void>
 }
 
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthState>({
   session: null,
   profile: null,
   loading: true,
+  isSigningOut: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 })
@@ -30,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const fetchProfile = useCallback(async (userId: string) => {
     if (!isSupabaseEnabled) {
@@ -75,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, s) => {
         setSession(s)
         if (s?.user) {
+          setIsSigningOut(false)
           await fetchProfile(s.user.id)
         } else {
           setProfile(null)
@@ -85,12 +90,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  const signOut = useCallback(async () => {
-    if (!isSupabaseEnabled) return
-    await supabase.auth.signOut()
-    queryClient.clear() // Prevent stale data leakage between user sessions
-    setSession(null)
-    setProfile(null)
+  const signOut = useCallback(() => {
+    // 1. Alert the layout immediately so it ignores incoming SIGNED_IN events
+    setIsSigningOut(true)
+    appEvents.emit('forceSignOut')
+
+    // 2. Force navigation to landing page immediately
+    try {
+      if (router.canDismiss()) router.dismissAll()
+      router.replace('/')
+    } catch (e) {
+      console.warn('[AuthContext] Replace failed, trying navigate:', e)
+      try {
+        router.navigate('/')
+      } catch (e2) {}
+    }
+
+    // 3. Clear state and session after a brief tick to allow navigation to start
+    setTimeout(async () => {
+      if (isSupabaseEnabled) {
+        try {
+          await supabase.auth.signOut()
+        } catch (err) {
+          console.warn('[AuthContext] Supabase signout error:', err)
+        }
+      }
+
+      queryClient.clear() // Prevent stale data leakage between user sessions
+      setSession(null)
+      setProfile(null)
+    }, 100)
   }, [])
 
   const refreshProfile = useCallback(async () => {
@@ -103,9 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     profile,
     loading,
+    isSigningOut,
     signOut,
     refreshProfile,
-  }), [session, profile, loading, signOut, refreshProfile])
+  }), [session, profile, loading, isSigningOut, signOut, refreshProfile])
 
   return (
     <AuthContext.Provider value={value}>

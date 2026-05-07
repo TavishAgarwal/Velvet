@@ -158,10 +158,7 @@ export default function SignupScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={FadeInDown.delay(80).duration(400)} style={s.content}>
-            <View style={s.appBadge}>
-              <View style={s.appBadgeDot} />
-              <Text style={s.appBadgeText}>{APP_NAME}</Text>
-            </View>
+
 
             <View style={s.titleBlock}>
               <Text style={s.titleBold}>Create an account</Text>

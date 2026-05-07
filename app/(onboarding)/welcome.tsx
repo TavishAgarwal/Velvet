@@ -1,61 +1,242 @@
-import React from 'react'
-import { View, StyleSheet } from 'react-native'
-import { router } from 'expo-router'
+/**
+ * Onboarding screen — runs once after first login.
+ *
+ * This template has a single onboarding step: collect the user's display name.
+ * The step is optional (users can skip).
+ *
+ * To add more onboarding steps:
+ *   1. Create app/(onboarding)/step2.tsx, step3.tsx, etc.
+ *   2. Update this file to navigate to the next step instead of completing onboarding.
+ *   3. Complete onboarding only in the last step.
+ */
+import { useState, useRef, useEffect } from 'react'
+import {
+  View, Pressable, TextInput, StyleSheet,
+  KeyboardAvoidingView, Platform, ActivityIndicator,
+} from 'react-native'
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Text } from '@/components/ui/Text'
-import { GoldButton } from '@/components/ui/Button'
-import { GoldDivider } from '@/components/ui/GoldDivider'
-import { ACCENT, ACCENT_DIM, BG_BASE } from '@/lib/theme'
-import { APP_NAME } from '@/lib/constants'
+import { supabase } from '@/lib/supabase'
+import { track } from '@/lib/analytics'
+import { appEvents } from '@/lib/events'
+import { queryClient } from '@/lib/queryClient'
+import { ACCENT, ACCENT_DIM, ACCENT_BORDER, BG, SURFACE, BORDER } from '@/lib/theme'
+import { LinearGradient } from 'expo-linear-gradient'
+import { adjustBrightness } from '@/lib/utils'
+import { Fonts } from '@/lib/typography'
 
-export default function WelcomeScreen() {
+export default function OnboardingScreen() {
   const insets = useSafeAreaInsets()
 
+  const [displayName, setDisplayName] = useState('')
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    async function fetchDefaultName() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) return
+
+        // Check if profile already has a name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', session.user.id)
+          .single()
+
+        if (profile?.display_name) {
+          setDisplayName(profile.display_name)
+          return
+        }
+
+        // Otherwise, fetch from application
+        const { data: app } = await supabase
+          .from('applications')
+          .select('full_name')
+          .eq('user_id', session.user.id)
+          .single()
+
+        if (app?.full_name) {
+          setDisplayName(app.full_name)
+        }
+      } catch (err) {
+        console.error('Failed to fetch default name:', err)
+      }
+    }
+    fetchDefaultName()
+  }, [])
+
+  track('onboarding_started')
+
+  async function handleSignOut() {
+    try {
+      await supabase.auth.signOut()
+      queryClient.clear()
+    } catch {
+      // Even if sign-out fails, the layout guard will handle it
+    }
+  }
+
+  async function complete(name?: string) {
+    if (loading) return
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) {
+        setError('Session expired. Please sign in again.')
+        setLoading(false)
+        return
+      }
+
+      const userId = session.user.id
+
+      const updatePayload: Record<string, any> = {
+        id: userId,
+        onboarding_completed: true,
+      }
+      if (name?.trim()) updatePayload.display_name = name.trim()
+
+      // Use upsert so this works even if the profile row wasn't created by a trigger
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .upsert(updatePayload, { onConflict: 'id' })
+
+      if (profileErr) {
+        console.error('Profile upsert error:', profileErr)
+        setError('Could not save. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      track('onboarding_completed', { skipped: !name?.trim() })
+      
+      // Signal the root layout directly via event bus.
+      // Wait for RouteGuard to see onboardingCompleted=true. The guard
+      // will navigate to /(tabs)/home automatically.
+      appEvents.emit('onboardingCompleted')
+
+      // Safety timeout: if the layout hasn't redirected us away within 8 seconds,
+      // something is wrong. Reset the spinner so the user isn't stuck.
+      timeoutRef.current = setTimeout(() => {
+        setLoading(false)
+        setError('Navigation timed out. Try again or sign out below.')
+      }, 8000)
+    } catch (e: any) {
+      console.error('Onboarding complete error:', e)
+      setError(e.message || 'An unexpected error occurred.')
+      setLoading(false)
+    }
+  }
+
   return (
-    <View style={[s.root, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 32 }]}>
-      <Animated.View entering={FadeInDown.delay(100).duration(600)} style={s.content}>
-        {/* Gold crest icon */}
-        <View style={s.crest}>
-          <Text style={s.crestEmoji}>✦</Text>
-        </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: BG }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={[s.root, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 }]}>
+        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={s.content}>
+          {/* Header */}
+          <View style={s.header}>
+            <View style={[s.iconBadge, { backgroundColor: ACCENT_DIM, borderColor: ACCENT_BORDER }]}>
+              <Text style={{ fontSize: 28 }}>👋</Text>
+            </View>
+            <Text style={s.title}>What should we call you?</Text>
+            <Text style={s.subtitle}>
+              This is optional — you can always change it later in your profile.
+            </Text>
+          </View>
 
-        <Text variant="display" color="primary" align="center" style={{ marginTop: 24 }}>
-          Welcome to{'\n'}{APP_NAME}
-        </Text>
+          {/* Name input */}
+          <View style={s.fieldGroup}>
+            <Text style={s.label}>YOUR NAME</Text>
+            <TextInput
+              value={displayName}
+              onChangeText={(v) => { setDisplayName(v); setError(null) }}
+              placeholder="Enter your name"
+              placeholderTextColor="rgba(255,255,255,0.18)"
+              style={s.input}
+              autoCapitalize="words"
+              returnKeyType="done"
+              onSubmitEditing={() => complete(displayName)}
+              autoFocus
+            />
+          </View>
 
-        <GoldDivider style={{ marginVertical: 20 }} />
+          {error ? (
+            <Animated.View entering={FadeIn.duration(180)} style={s.errorBox}>
+              <Text style={{ color: '#f87171', fontSize: 13 }}>{error}</Text>
+            </Animated.View>
+          ) : null}
+        </Animated.View>
 
-        <Text variant="body" color="secondary" align="center" style={{ paddingHorizontal: 20 }}>
-          Your application has been approved. You're now part of a curated community
-          of the curious and the creative.
-        </Text>
+        {/* Bottom buttons */}
+        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={s.buttons}>
+          <Pressable
+            onPress={() => complete(displayName)}
+            disabled={loading}
+            style={({ pressed }) => ({
+              opacity: loading ? 0.5 : pressed ? 0.85 : 1,
+              borderRadius: 16, overflow: 'hidden',
+            })}
+          >
+            <LinearGradient
+              colors={[ACCENT, adjustBrightness(ACCENT, -25)]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={s.primaryBtn}
+            >
+              {loading
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>
+                    {displayName.trim() ? 'Continue  →' : 'Get Started  →'}
+                  </Text>
+              }
+            </LinearGradient>
+          </Pressable>
 
-        <Text variant="bodySm" color="tertiary" align="center" style={{ marginTop: 16, paddingHorizontal: 32 }}>
-          Let's set up your profile so other members can find you.
-        </Text>
-      </Animated.View>
+          <Pressable onPress={() => complete()} disabled={loading} style={{ alignItems: 'center', paddingVertical: 6 }}>
+            <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)' }}>Skip for now</Text>
+          </Pressable>
 
-      <Animated.View entering={FadeInDown.delay(400).duration(500)} style={s.footer}>
-        <GoldButton
-          title="Set Up My Profile"
-          onPress={() => router.push('/(onboarding)/setup-profile')}
-          fullWidth
-        />
-      </Animated.View>
-    </View>
+          <Pressable onPress={handleSignOut} style={{ alignItems: 'center', paddingVertical: 8 }}>
+            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>Sign out</Text>
+          </Pressable>
+        </Animated.View>
+      </View>
+    </KeyboardAvoidingView>
   )
 }
 
+// adjustBrightness imported from @/lib/utils
+
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: BG_BASE, justifyContent: 'space-between' },
-  content: { alignItems: 'center', paddingHorizontal: 24 },
-  crest: {
+  root: { flex: 1, paddingHorizontal: 24 },
+  content: { flex: 1, gap: 24, justifyContent: 'center' },
+  header: { gap: 12, alignItems: 'center', paddingBottom: 8 },
+  iconBadge: {
     width: 80, height: 80, borderRadius: 24,
-    backgroundColor: ACCENT_DIM,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: `${ACCENT}30`,
+    borderWidth: 1.5, alignItems: 'center', justifyContent: 'center',
   },
-  crestEmoji: { fontSize: 36, color: ACCENT },
-  footer: { paddingHorizontal: 24 },
+  title:    { fontSize: 28, fontFamily: Fonts.playfairBold, color: '#fff', letterSpacing: -0.5, textAlign: 'center', lineHeight: 36, paddingTop: 8 },
+  subtitle: { fontSize: 14, fontFamily: Fonts.dmRegular, color: 'rgba(255,255,255,0.38)', textAlign: 'center', lineHeight: 21, maxWidth: 280 },
+
+  fieldGroup: { gap: 8 },
+  label: { fontSize: 11, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' },
+  input: {
+    height: 52, backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1, borderColor: BORDER, borderRadius: 14,
+    paddingHorizontal: 18, color: '#fff', fontSize: 16,
+    fontFamily: Fonts.regular,
+  },
+  errorBox: {
+    backgroundColor: 'rgba(248,113,113,0.08)', borderRadius: 8,
+    borderWidth: 1, borderColor: 'rgba(248,113,113,0.2)',
+    paddingHorizontal: 14, paddingVertical: 10,
+  },
+  buttons:    { gap: 12 },
+  primaryBtn: { height: 56, alignItems: 'center', justifyContent: 'center' },
 })

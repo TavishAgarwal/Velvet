@@ -11,6 +11,7 @@ const MOCK_APPLICATIONS: Application[] = [
     why_join: 'Looking to connect with creatives and expand my network in the art world.',
     referral_code: 'VELVET-M9P4', status: 'pending',
     admin_notes: null, reviewed_by: null, reviewed_at: null,
+    country: null, what_you_bring: null, how_heard: null,
     created_at: new Date(Date.now() - 2 * 86_400_000).toISOString(),
   },
   {
@@ -20,6 +21,7 @@ const MOCK_APPLICATIONS: Application[] = [
     why_join: 'Heard amazing things from Nina — would love to join the design community.',
     referral_code: null, status: 'pending',
     admin_notes: null, reviewed_by: null, reviewed_at: null,
+    country: null, what_you_bring: null, how_heard: null,
     created_at: new Date(Date.now() - 1 * 86_400_000).toISOString(),
   },
   {
@@ -29,6 +31,7 @@ const MOCK_APPLICATIONS: Application[] = [
     why_join: 'Building in fintech. Looking for cross-industry perspectives.',
     referral_code: null, status: 'pending',
     admin_notes: null, reviewed_by: null, reviewed_at: null,
+    country: null, what_you_bring: null, how_heard: null,
     created_at: new Date(Date.now() - 4 * 3_600_000).toISOString(),
   },
 ]

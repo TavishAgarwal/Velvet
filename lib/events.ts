@@ -9,6 +9,7 @@
 type EventMap = {
   onboardingCompleted: void
   applicationStatusChanged: void
+  forceSignOut: void
 }
 
 const listeners = new Map<keyof EventMap, Set<() => void>>()

@@ -9,7 +9,7 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (profile && profile.role !== 'admin') {
-      router.replace('/(tabs)/')
+      router.replace('/(tabs)/home')
     }
   }, [profile])
 
